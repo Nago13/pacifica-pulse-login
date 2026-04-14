@@ -17,9 +17,8 @@ interface BattleResultState {
   moedaEscolhida: string;
   moedaVencedora: string;
   acertou: boolean;
-  variacaoBTC: string;
-  variacaoETH: string;
-  variacaoSOL: string;
+  arenaCoins: string[];
+  [key: string]: unknown;
 }
 
 type ResultState = ClassicResultState | BattleResultState;
@@ -210,21 +209,21 @@ const PredictionResult = () => {
 // ========== Battle Result ==========
 
 const BattleResult = ({ state, navigate }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate> }) => {
-  const { acertou, moedaEscolhida, moedaVencedora, variacaoBTC, variacaoETH, variacaoSOL } = state;
+  const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
   const particleColor = acertou ? "hsl(160,74%,42%)" : "hsl(355,79%,59%)";
 
-  const variations: { ticker: string; variacao: string }[] = [
-    { ticker: "BTC", variacao: variacaoBTC },
-    { ticker: "ETH", variacao: variacaoETH },
-    { ticker: "SOL", variacao: variacaoSOL },
-  ];
+  const variations: { ticker: string; variacao: string }[] = (arenaCoins ?? ["BTC", "ETH", "SOL"]).map((ticker) => ({
+    ticker,
+    variacao: (state[`variacao${ticker}`] as string) ?? "+0.00%",
+  }));
 
+  const varSummary = variations.map((v) => `${v.ticker}: ${v.variacao}`).join(" | ");
   const tweetText = encodeURIComponent(
     acertou
-      ? `🏆 Acertei no modo Batalha do Pacifica Pulse! ${moedaEscolhida} foi a campeã! 🪙\n\nBTC: ${variacaoBTC} | ETH: ${variacaoETH} | SOL: ${variacaoSOL}\n\nTente também 👇`
-      : `📊 Errei no modo Batalha, a campeã foi ${moedaVencedora}!\n\nBTC: ${variacaoBTC} | ETH: ${variacaoETH} | SOL: ${variacaoSOL}\n\nTente também 👇`
+      ? `🏆 Acertei no modo Batalha do Pacifica Pulse! ${moedaEscolhida} foi a campeã! 🪙\n\n${varSummary}\n\nTente também 👇`
+      : `📊 Errei no modo Batalha, a campeã foi ${moedaVencedora}!\n\n${varSummary}\n\nTente também 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
 
