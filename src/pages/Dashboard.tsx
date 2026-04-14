@@ -156,6 +156,8 @@ const Dashboard = () => {
         const result = await fetchPrices();
         const finalCoins = result ?? coins;
 
+        const tickerMap: Record<string, string> = { bitcoin: "BTC", ethereum: "ETH", solana: "SOL" };
+
         const calcVar = (coin: keyof CoinPrices) => {
           const start = battleStartPrices[coin]?.price;
           const end = finalCoins[coin]?.price;
@@ -163,30 +165,33 @@ const Dashboard = () => {
           return ((end - start) / start) * 100;
         };
 
-        const varBTC = calcVar("bitcoin");
-        const varETH = calcVar("ethereum");
-        const varSOL = calcVar("solana");
+        // Only compare arena coins
+        const arenaVariations: Record<string, number> = {};
+        for (const coinId of battleArenaCoins) {
+          const ticker = tickerMap[coinId] ?? coinId.toUpperCase();
+          arenaVariations[ticker] = calcVar(coinId as keyof CoinPrices);
+        }
 
-        const variations: Record<string, number> = { BTC: varBTC, ETH: varETH, SOL: varSOL };
-        const moedaVencedora = Object.entries(variations).sort((a, b) => b[1] - a[1])[0][0];
-        const coinIdMap: Record<string, string> = { BTC: "bitcoin", ETH: "ethereum", SOL: "solana" };
-        const chosenTicker = Object.entries(coinIdMap).find(([, v]) => v === battleChoice)?.[0] ?? "BTC";
+        const moedaVencedora = Object.entries(arenaVariations).sort((a, b) => b[1] - a[1])[0][0];
+        const chosenTicker = tickerMap[battleChoice] ?? "BTC";
 
         setBattleActive(false);
         setBattleChoice(null);
         setBattleStartPrices(null);
+        setBattleArenaCoins([]);
 
-        navigate("/result", {
-          state: {
-            modo: "batalha",
-            moedaEscolhida: chosenTicker,
-            moedaVencedora,
-            acertou: chosenTicker === moedaVencedora,
-            variacaoBTC: (varBTC >= 0 ? "+" : "") + varBTC.toFixed(2) + "%",
-            variacaoETH: (varETH >= 0 ? "+" : "") + varETH.toFixed(2) + "%",
-            variacaoSOL: (varSOL >= 0 ? "+" : "") + varSOL.toFixed(2) + "%",
-          },
-        });
+        const stateData: Record<string, unknown> = {
+          modo: "batalha",
+          moedaEscolhida: chosenTicker,
+          moedaVencedora,
+          acertou: chosenTicker === moedaVencedora,
+          arenaCoins: Object.keys(arenaVariations),
+        };
+        for (const [ticker, val] of Object.entries(arenaVariations)) {
+          stateData[`variacao${ticker}`] = (val >= 0 ? "+" : "") + val.toFixed(2) + "%";
+        }
+
+        navigate("/result", { state: stateData });
       };
       resolve();
     }
