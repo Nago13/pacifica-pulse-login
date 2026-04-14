@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trophy, Flame, Crown } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { supabase } from "@/lib/supabase";
+import { useUser } from "@/contexts/UserContext";
 
 const tabs = ["Global", "Amigos", "Semanal"];
 const leagues = ["Todos", "Bronze", "Prata", "Ouro", "Platina", "Diamante", "Lendária"];
@@ -11,22 +13,29 @@ const leagueBadgeColors: Record<string, string> = {
   Ouro: "bg-warning/20 text-warning",
   Platina: "bg-pacific/20 text-pacific",
   Diamante: "bg-[#B9F2FF]/20 text-[#B9F2FF]",
-  Lendária: "bg-danger/20 text-danger",
+  "Lendária": "bg-danger/20 text-danger",
 };
 
 const medalColors = ["text-warning", "text-[#A8B2BB]", "text-[#CD7F32]"];
 
 interface Player {
-  rank: number; name: string; initials: string; league: string; streak: number; trophies: number;
+  rank: number;
+  name: string;
+  initials: string;
+  league: string;
+  streak: number;
+  trophies: number;
 }
 
-const topPlayers: Player[] = [
+const cardBorder = { border: "1px solid rgba(92,200,232,0.15)" };
+
+// Fallback data
+const fallbackTop: Player[] = [
   { rank: 1, name: "CryptoKing", initials: "CK", league: "Lendária", streak: 32, trophies: 4210 },
   { rank: 2, name: "SolanaWhale", initials: "SW", league: "Diamante", streak: 21, trophies: 3890 },
   { rank: 3, name: "BitHunter", initials: "BH", league: "Diamante", streak: 18, trophies: 3650 },
 ];
-
-const otherPlayers: Player[] = Array.from({ length: 17 }, (_, i) => ({
+const fallbackOthers: Player[] = Array.from({ length: 17 }, (_, i) => ({
   rank: i + 4,
   name: ["MoonShot", "DeFiPro", "HODLer", "AltMaster", "ChartWiz", "TokenAce", "BlockPro", "HashKing", "SwapGuru", "YieldMax", "StakePro", "GasLow", "APYking", "LPfarmer", "BullRun", "BearTrap", "PumpIt"][i],
   initials: ["MS", "DP", "HL", "AM", "CW", "TA", "BP", "HK", "SG", "YM", "SP", "GL", "AK", "LF", "BR", "BT", "PI"][i],
@@ -35,13 +44,64 @@ const otherPlayers: Player[] = Array.from({ length: 17 }, (_, i) => ({
   trophies: 3500 - i * 140 + Math.floor(Math.random() * 50),
 }));
 
-const currentUser: Player = { rank: 142, name: "Pedro", initials: "PE", league: "Ouro", streak: 5, trophies: 847 };
-
-const cardBorder = { border: "1px solid rgba(92,200,232,0.15)" };
-
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Global");
   const [activeLeague, setActiveLeague] = useState("Todos");
+  const { user } = useUser();
+
+  const [topPlayers, setTopPlayers] = useState<Player[]>(fallbackTop);
+  const [otherPlayers, setOtherPlayers] = useState<Player[]>(fallbackOthers);
+  const [currentUserRank, setCurrentUserRank] = useState<Player>({
+    rank: 142, name: "Pedro", initials: "PE", league: "Ouro", streak: 5, trophies: 847,
+  });
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("username, trophies, streak, league")
+          .order("trophies", { ascending: false })
+          .limit(20);
+
+        if (error || !data || data.length === 0) return;
+
+        const players: Player[] = data.map((u, i) => ({
+          rank: i + 1,
+          name: u.username,
+          initials: u.username.slice(0, 2).toUpperCase(),
+          league: u.league ?? "Bronze",
+          streak: u.streak ?? 0,
+          trophies: u.trophies ?? 0,
+        }));
+
+        if (players.length >= 3) {
+          setTopPlayers(players.slice(0, 3));
+          setOtherPlayers(players.slice(3));
+        }
+
+        // Find current user rank
+        if (user) {
+          const idx = players.findIndex((p) => p.name === user.username);
+          if (idx >= 0) {
+            setCurrentUserRank(players[idx]);
+          } else {
+            setCurrentUserRank({
+              rank: players.length + 1,
+              name: user.username,
+              initials: user.username.slice(0, 2).toUpperCase(),
+              league: user.league,
+              streak: user.streak,
+              trophies: user.trophies,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Leaderboard fetch error:", err);
+      }
+    };
+    fetchLeaderboard();
+  }, [user]);
 
   const podiumOrder = [topPlayers[1], topPlayers[0], topPlayers[2]];
   const podiumHeights = ["h-28", "h-36", "h-24"];
@@ -98,11 +158,11 @@ const Leaderboard = () => {
 
           <div className="rounded-[12px] bg-ocean-button p-3 flex items-center gap-3" style={{ border: "1px solid hsl(195,74%,64%)" }}>
             <div className="flex flex-col"><span className="text-ocean-muted text-[11px]">Sua posição</span></div>
-            <span className="text-pacific text-xl font-bold">#{currentUser.rank}</span>
-            <div className="w-8 h-8 rounded-full bg-ocean-dark flex items-center justify-center text-foreground text-xs font-bold border border-pacific/30">{currentUser.initials}</div>
-            <span className="text-foreground text-sm font-medium">{currentUser.name}</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${leagueBadgeColors[currentUser.league]}`}>{currentUser.league}</span>
-            <span className="text-foreground text-sm font-bold ml-auto">{currentUser.trophies}</span>
+            <span className="text-pacific text-xl font-bold">#{currentUserRank.rank}</span>
+            <div className="w-8 h-8 rounded-full bg-ocean-dark flex items-center justify-center text-foreground text-xs font-bold border border-pacific/30">{currentUserRank.initials}</div>
+            <span className="text-foreground text-sm font-medium">{currentUserRank.name}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${leagueBadgeColors[currentUserRank.league] ?? ""}`}>{currentUserRank.league}</span>
+            <span className="text-foreground text-sm font-bold ml-auto">{currentUserRank.trophies.toLocaleString()}</span>
             <Trophy size={14} className="text-pacific" />
           </div>
 
@@ -120,7 +180,7 @@ const Leaderboard = () => {
                   <div className="w-8 h-8 rounded-full bg-ocean-dark flex items-center justify-center text-foreground text-[10px] font-bold shrink-0">{p.initials}</div>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
                     <span className="text-foreground text-sm font-medium truncate">{p.name}</span>
-                    <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${leagueBadgeColors[p.league]}`}>{p.league}</span>
+                    <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${leagueBadgeColors[p.league] ?? ""}`}>{p.league}</span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Flame size={12} className="text-warning" />

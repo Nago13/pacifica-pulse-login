@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2 } from "lucide-react";
+import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
 import BattleMode from "@/components/BattleMode";
 import PrecisionMode from "@/components/PrecisionMode";
 import type { PrecisionRange } from "@/components/PrecisionMode";
+import { useUser } from "@/contexts/UserContext";
 
 const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true";
 const COUNTDOWN_SECONDS = 60;
@@ -28,11 +29,26 @@ const RANGE_BOUNDS: Record<PrecisionRange, [number, number]> = {
   "2+": [2, Infinity],
 };
 
+const leagueBadgeColors: Record<string, string> = {
+  Bronze: "bg-[#CD7F32] text-ocean-dark",
+  Prata: "bg-[#A8B2BB] text-ocean-dark",
+  Ouro: "bg-warning text-ocean-dark",
+  Platina: "bg-pacific text-ocean-dark",
+  Diamante: "bg-[#B9F2FF] text-ocean-dark",
+  "Lendária": "bg-danger text-foreground",
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, checkChest, openChest } = useUser();
   const [coins, setCoins] = useState<CoinPrices>({ bitcoin: null, ethereum: null, solana: null });
   const [flashing, setFlashing] = useState(false);
   const [apiError, setApiError] = useState(false);
+
+  // Chest state
+  const [chestAvailable, setChestAvailable] = useState(false);
+  const [chestReward, setChestReward] = useState<{ tipo: string; valor: number } | null>(null);
+  const [showChestModal, setShowChestModal] = useState(false);
 
   // Classic prediction state
   const [predictionActive, setPredictionActive] = useState(false);
@@ -57,6 +73,20 @@ const Dashboard = () => {
   const [precisionRange, setPrecisionRange] = useState<PrecisionRange | null>(null);
   const [precisionPrice, setPrecisionPrice] = useState<number | null>(null);
   const [precisionReward, setPrecisionReward] = useState(0);
+
+  // Check chest availability
+  useEffect(() => {
+    checkChest().then(setChestAvailable);
+  }, [checkChest]);
+
+  const handleOpenChest = async () => {
+    const reward = await openChest();
+    if (reward) {
+      setChestReward(reward);
+      setShowChestModal(true);
+      setChestAvailable(false);
+    }
+  };
 
   const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
     try {
@@ -134,12 +164,20 @@ const Dashboard = () => {
         setPredictionDir(null);
         setPredictionPrice(null);
         navigate("/result", {
-          state: { acertou, variacao: Math.abs(variacao).toFixed(2), ativo: "BTC", direcao: predictionDir, precoInicial: predictionPrice, precoFinal: finalPrice },
+          state: {
+            acertou,
+            variacao: Math.abs(variacao).toFixed(2),
+            ativo: "BTC",
+            direcao: predictionDir,
+            precoInicial: predictionPrice,
+            precoFinal: finalPrice,
+            streak: user?.streak ?? 0,
+          },
         });
       };
       resolve();
     }
-  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price]);
+  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price, user]);
 
   // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
@@ -176,6 +214,7 @@ const Dashboard = () => {
         const stateData: Record<string, unknown> = {
           modo: "batalha", moedaEscolhida: chosenTicker, moedaVencedora,
           acertou: chosenTicker === moedaVencedora, arenaCoins: Object.keys(arenaVariations),
+          streak: user?.streak ?? 0,
         };
         for (const [ticker, val] of Object.entries(arenaVariations)) {
           stateData[`variacao${ticker}`] = (val >= 0 ? "+" : "") + val.toFixed(2) + "%";
@@ -184,7 +223,7 @@ const Dashboard = () => {
       };
       resolve();
     }
-  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins, battleArenaCoins]);
+  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins, battleArenaCoins, user]);
 
   // ── Precision ──
   const handlePrecisionConfirm = (range: PrecisionRange, reward: number) => {
@@ -207,7 +246,6 @@ const Dashboard = () => {
         const [min, max] = RANGE_BOUNDS[precisionRange];
         const acertou = variacaoAbs >= min && variacaoAbs < max;
 
-        // Find actual range label
         let faixaReal = "";
         for (const [key, [lo, hi]] of Object.entries(RANGE_BOUNDS)) {
           if (variacaoAbs >= lo && variacaoAbs < hi) { faixaReal = key; break; }
@@ -231,12 +269,13 @@ const Dashboard = () => {
             retorno: savedReward,
             precoInicial: savedPrice,
             precoFinal: finalPrice,
+            streak: user?.streak ?? 0,
           },
         });
       };
       resolve();
     }
-  }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price]);
+  }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price, user]);
 
   // Cleanup
   useEffect(() => {
@@ -250,23 +289,28 @@ const Dashboard = () => {
   const anyActive = predictionActive || battleActive || precisionActive;
   const timerLow = countdown < 10 && countdown > 0;
 
+  const userTrophies = user?.trophies ?? 0;
+  const userStreak = user?.streak ?? 0;
+  const userLeague = user?.league ?? "Bronze";
+  const initials = (user?.username ?? "PE").slice(0, 2).toUpperCase();
+
   return (
     <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col">
       <header className="flex items-center justify-between px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-sm">PE</div>
-          <span className="text-foreground font-medium text-sm">Pedro</span>
+          <div className="w-10 h-10 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-sm">{initials}</div>
+          <span className="text-foreground font-medium text-sm">{user?.username ?? "Pedro"}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Flame size={18} className="text-warning" />
-          <span className="text-foreground text-sm font-medium">Streak: 5 dias</span>
+          <span className="text-foreground text-sm font-medium">Streak: {userStreak} dias</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <Trophy size={16} className="text-pacific" />
-            <span className="text-foreground text-sm font-bold">847</span>
+            <span className="text-foreground text-sm font-bold">{userTrophies.toLocaleString()}</span>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-warning text-ocean-dark text-xs font-bold">Ouro</span>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${leagueBadgeColors[userLeague] ?? "bg-warning text-ocean-dark"}`}>{userLeague}</span>
         </div>
       </header>
 
@@ -361,9 +405,9 @@ const Dashboard = () => {
 
             <div className="w-full max-w-lg grid grid-cols-3 gap-3">
               {[
-                { label: "Acertos hoje", value: "2/3" },
-                { label: "Taxa de acerto", value: "68%" },
-                { label: "Ranking", value: "#142" },
+                { label: "Acertos hoje", value: "—" },
+                { label: "Taxa de acerto", value: "—" },
+                { label: "Ranking", value: "—" },
               ].map((s) => (
                 <div key={s.label} className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-1" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
                   <span className="text-ocean-muted text-[10px] sm:text-xs text-center">{s.label}</span>
@@ -398,10 +442,34 @@ const Dashboard = () => {
         )}
       </main>
 
-      <button className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-card-surface flex items-center justify-center shadow-lg z-10" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
+      <button
+        onClick={handleOpenChest}
+        disabled={!chestAvailable}
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-card-surface flex items-center justify-center shadow-lg z-10 transition-all hover:scale-105"
+        style={{ border: "1px solid rgba(92,200,232,0.15)" }}
+      >
         <Package size={24} className="text-pacific" />
-        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-danger text-foreground text-[10px] font-bold flex items-center justify-center">1</span>
+        {chestAvailable && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-danger text-foreground text-[10px] font-bold flex items-center justify-center">1</span>
+        )}
       </button>
+
+      {showChestModal && chestReward && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4" onClick={() => setShowChestModal(false)}>
+          <div className="bg-card-surface rounded-[16px] p-6 w-full max-w-sm text-center animate-result-enter" style={{ border: "1px solid rgba(92,200,232,0.3)" }} onClick={(e) => e.stopPropagation()}>
+            <Gift size={48} className="text-pacific mx-auto mb-4" />
+            <h2 className="text-foreground text-xl font-bold mb-2">Baú Diário!</h2>
+            <p className="text-ocean-muted text-sm mb-4">
+              {chestReward.tipo === "moedas" && `Você ganhou +${chestReward.valor} troféus!`}
+              {chestReward.tipo === "escudo" && `Você ganhou ${chestReward.valor} escudo protetor!`}
+              {chestReward.tipo === "xp_boost" && `Você ganhou ${chestReward.valor}x XP Boost!`}
+            </p>
+            <button onClick={() => setShowChestModal(false)} className="w-full h-11 rounded-[12px] bg-pacific text-ocean-dark font-bold text-sm">
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

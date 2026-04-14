@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown, Target, ArrowRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useUser } from "@/contexts/UserContext";
 
 interface ClassicResultState {
   acertou: boolean;
@@ -9,6 +10,7 @@ interface ClassicResultState {
   direcao: "up" | "down";
   precoInicial: number;
   precoFinal: number;
+  streak: number;
   modo?: undefined;
 }
 
@@ -18,6 +20,7 @@ interface BattleResultState {
   moedaVencedora: string;
   acertou: boolean;
   arenaCoins: string[];
+  streak: number;
   [key: string]: unknown;
 }
 
@@ -30,11 +33,10 @@ interface PrecisionResultState {
   retorno: number;
   precoInicial: number;
   precoFinal: number;
+  streak: number;
 }
 
 type ResultState = ClassicResultState | BattleResultState | PrecisionResultState;
-
-const STREAK = 5;
 
 const Particles = ({ color }: { color: string }) => {
   const particles = useMemo(
@@ -97,17 +99,71 @@ const PredictionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as ResultState | null;
+  const { user, savePrediction, refreshUser } = useUser();
+  const savedRef = useRef(false);
 
   const isBattle = state?.modo === "batalha";
   const isPrecision = state?.modo === "precisao";
   const acertou = state?.acertou ?? true;
+  const streak = (state as any)?.streak ?? user?.streak ?? 0;
+
+  // Save prediction to Supabase once
+  useEffect(() => {
+    if (!state || savedRef.current) return;
+    savedRef.current = true;
+
+    let trophiesDelta: number;
+    let mode: string;
+    let asset: string;
+    let direction: string | null = null;
+    let priceInitial = 0;
+    let priceFinal = 0;
+    let variationReal = 0;
+
+    if (isPrecision) {
+      const s = state as PrecisionResultState;
+      mode = "precisao";
+      asset = "BTC";
+      priceInitial = s.precoInicial;
+      priceFinal = s.precoFinal;
+      variationReal = parseFloat(s.variacaoReal);
+      trophiesDelta = s.acertou ? s.retorno : -15;
+    } else if (isBattle) {
+      const s = state as BattleResultState;
+      mode = "batalha";
+      asset = s.moedaEscolhida;
+      trophiesDelta = s.acertou ? 40 : -15;
+    } else {
+      const s = state as ClassicResultState;
+      mode = "classico";
+      asset = s.ativo;
+      direction = s.direcao;
+      priceInitial = s.precoInicial;
+      priceFinal = s.precoFinal;
+      variationReal = parseFloat(s.variacao);
+      const baseTrophies = 25;
+      const hasMultiplier = s.acertou && streak > 3;
+      trophiesDelta = s.acertou ? (hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies) : -15;
+    }
+
+    savePrediction({
+      mode,
+      asset,
+      direction,
+      price_initial: priceInitial,
+      price_final: priceFinal,
+      variation_real: variationReal,
+      result: acertou,
+      trophies_delta: trophiesDelta,
+    }).then(() => refreshUser());
+  }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak]);
 
   if (isPrecision) {
-    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} />;
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} />;
   }
 
   if (isBattle) {
-    return <BattleResult state={state as BattleResultState} navigate={navigate} />;
+    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} />;
   }
 
   // Classic mode
@@ -116,7 +172,7 @@ const PredictionResult = () => {
   const direcao = (state as ClassicResultState)?.direcao ?? "up";
 
   const baseTrophies = acertou ? 25 : 15;
-  const hasMultiplier = acertou && STREAK > 3;
+  const hasMultiplier = acertou && streak > 3;
   const finalTrophies = hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies;
 
   const dirLabel = direcao === "up" ? "subiu" : "caiu";
@@ -129,7 +185,7 @@ const PredictionResult = () => {
 
   const tweetText = encodeURIComponent(
     acertou
-      ? `🏆 Acertei minha previsão no Pacifica Pulse! ${ativo} ${actualMovement} ${variacao}% 📈\n\n🔥 Streak: ${STREAK} dias | Liga Ouro | 68% de acerto\n\nTente também 👇`
+      ? `🏆 Acertei minha previsão no Pacifica Pulse! ${ativo} ${actualMovement} ${variacao}% 📈\n\n🔥 Streak: ${streak} dias | Liga ${user?.league ?? "—"} | ${user?.trophies ?? 0} troféus\n\nTente também 👇`
       : `📊 Errei dessa vez no Pacifica Pulse, mas sigo firme!\n\nTente também 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
@@ -166,11 +222,8 @@ const PredictionResult = () => {
         <div className="flex items-center justify-center gap-2 mb-2">
           <Flame size={18} className={acertou ? "text-warning" : "text-ocean-muted"} />
           <span className="text-foreground text-sm font-medium">
-            {acertou ? `Streak: ${STREAK} dias` : "Streak zerado"}
+            {acertou ? `Streak: ${streak + 1} dias` : "Streak zerado"}
           </span>
-          {acertou && STREAK >= 5 && (
-            <span className="px-2 py-0.5 rounded-full bg-warning text-ocean-dark text-[10px] font-bold">Novo recorde!</span>
-          )}
         </div>
 
         {hasMultiplier && (
@@ -185,13 +238,12 @@ const PredictionResult = () => {
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
           <div className="flex items-center gap-2 mb-2">
             <Trophy size={14} className="text-pacific" />
-            <span className="text-foreground text-xs font-bold">Liga Ouro</span>
-            <span className="text-ocean-muted text-[10px] ml-auto">847 troféus</span>
+            <span className="text-foreground text-xs font-bold">Liga {user?.league ?? "—"}</span>
+            <span className="text-ocean-muted text-[10px] ml-auto">{user?.trophies?.toLocaleString() ?? "—"} troféus</span>
           </div>
           <p className="text-foreground text-sm font-medium mb-1">
             {acertou ? `✅ Acertei! ${ativo} ${variacao}%` : `📊 Errei, mas sigo firme!`}
           </p>
-          <p className="text-ocean-muted text-[10px]">Taxa de acerto: 68%</p>
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
 
@@ -224,7 +276,7 @@ const PredictionResult = () => {
 
 // ========== Battle Result ==========
 
-const BattleResult = ({ state, navigate }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate> }) => {
+const BattleResult = ({ state, navigate, user, streak }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number }) => {
   const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -269,7 +321,6 @@ const BattleResult = ({ state, navigate }: { state: BattleResultState; navigate:
             : `A campeã foi ${moedaVencedora}`}
         </p>
 
-        {/* Coin comparison table */}
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5 space-y-3" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
           {variations.map((v) => {
             const meta = COIN_META[v.ticker];
@@ -347,7 +398,7 @@ const RANGE_LABELS: Record<string, string> = {
   "2+": "> 2%",
 };
 
-const PrecisionResult = ({ state, navigate }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate> }) => {
+const PrecisionResult = ({ state, navigate, user, streak }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number }) => {
   const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
   const trophies = acertou ? retorno : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -388,7 +439,6 @@ const PrecisionResult = ({ state, navigate }: { state: PrecisionResultState; nav
             : `A variação foi ${variacaoReal}% — fora da sua faixa`}
         </p>
 
-        {/* Price comparison card */}
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
           <div className="flex items-center justify-between gap-2">
             <div className="text-center flex-1">
@@ -410,7 +460,6 @@ const PrecisionResult = ({ state, navigate }: { state: PrecisionResultState; nav
           </div>
         </div>
 
-        {/* Range badge */}
         <div className={`rounded-[10px] p-3 mb-2 flex items-center justify-between ${acertou ? "border-2 border-success bg-success/10" : "border-2 border-danger bg-danger/10"}`}>
           <span className="text-foreground text-sm font-medium">
             Sua aposta: {RANGE_LABELS[faixaEscolhida] ?? faixaEscolhida}
