@@ -403,6 +403,16 @@ const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFu
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
+
+        {acertou && chestEarned && (
+          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
+            <Package size={20} className="text-pacific animate-pulse" />
+            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
+          </div>
+        )}
+        {acertou && chestSlotsFull && (
+          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
+        )}
       </div>
     </div>
   );
@@ -518,6 +528,16 @@ const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlot
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
+
+        {acertou && chestEarned && (
+          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
+            <Package size={20} className="text-pacific animate-pulse" />
+            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
+          </div>
+        )}
+        {acertou && chestSlotsFull && (
+          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
+        )}
       </div>
     </div>
   );
