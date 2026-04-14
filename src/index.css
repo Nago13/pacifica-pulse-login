@@ -112,3 +112,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes resultModalIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes chestPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

@@ -146,30 +146,35 @@ const Chests = () => {
                   <span className="text-foreground font-bold text-sm mb-3 block">{label}</span>
                   <div className="flex items-center gap-2 mb-2">
                     {Array.from({ length: 5 }).map((_, i) => {
-                      const chest = modeChests.filter(c => !c.opened_at)[i];
+                      const chest = unopened[i];
                       const hasChest = !!chest;
 
-                      return (
+                      return hasChest ? (
                         <button
                           key={i}
-                          onClick={() => hasChest && handleOpenBattle(chest)}
-                          disabled={!hasChest || openingChest}
-                          className={`w-11 h-11 rounded-[8px] flex items-center justify-center transition-all ${
-                            hasChest
-                              ? "bg-[hsl(200,50%,20%)] border-2 border-pacific cursor-pointer hover:scale-105 active:scale-95"
-                              : "bg-card-surface border border-[rgba(255,255,255,0.1)] cursor-default"
-                          }`}
+                          onClick={() => handleOpenBattle(chest)}
+                          disabled={openingChest}
+                          className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95"
+                          style={{ background: "#1A3A4E", border: "1.5px solid #5CC8E8" }}
                         >
-                          {hasChest ? (
-                            <Package size={18} className="text-pacific animate-pulse" />
-                          ) : (
-                            <Lock size={14} className="text-ocean-muted/50" />
-                          )}
+                          <Package size={24} style={{ color: "#5CC8E8" }} />
                         </button>
+                      ) : (
+                        <div
+                          key={i}
+                          className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default"
+                          style={{ background: "#0A1929", border: "1px solid rgba(255,255,255,0.08)" }}
+                        >
+                          <Lock size={20} style={{ color: "rgba(255,255,255,0.2)" }} />
+                        </div>
                       );
                     })}
                   </div>
-                  <span className="text-ocean-muted text-[11px]">{total}/5 baús hoje</span>
+                  <span className="text-ocean-muted text-[11px]">
+                    {unopened.length > 0
+                      ? `${unopened.length} baú(s) disponível(is) para abrir · ${5 - unopened.length} slot(s) restantes hoje`
+                      : "Nenhum baú ainda — acerte previsões para ganhar!"}
+                  </span>
                 </div>
               );
             })}
