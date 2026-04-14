@@ -95,6 +95,65 @@ const COIN_META: Record<string, { name: string; symbol: string; symbolBg: string
   SOL: { name: "Solana", symbol: "◎", symbolBg: "bg-[hsl(280,50%,20%)]", symbolColor: "text-[hsl(170,80%,60%)]" },
 };
 
+const MODE_LABELS: Record<string, string> = { classico: "Clássico", batalha: "Batalha", precisao: "Precisão" };
+
+const ChestNotification = ({ acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode, navigate }: {
+  acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate>;
+}) => {
+  if (!acertou) return null;
+  const modeLabel = MODE_LABELS[mode] ?? mode;
+
+  if (chestEarned && bausRestantes > 0) {
+    return (
+      <div className="w-full rounded-[12px] p-[14px] space-y-2" style={{ background: "#0F2235", border: "1px solid #5CC8E8" }}>
+        <div className="flex items-center gap-2">
+          <Package size={20} className="text-pacific animate-pulse" />
+          <span className="text-foreground font-bold text-sm">Baú de Batalha desbloqueado!</span>
+        </div>
+        <p className="text-ocean-muted text-xs">
+          Você ainda pode ganhar mais {bausRestantes} baú(s) no modo {modeLabel} hoje
+        </p>
+        <button onClick={() => navigate("/chests")} className="w-full h-10 rounded-[10px] flex items-center justify-center gap-1 font-bold text-[13px] transition-all hover:opacity-80" style={{ background: "#5CC8E8", color: "#0D1B2A" }}>
+          Ver meus baús →
+        </button>
+      </div>
+    );
+  }
+
+  if (chestSlotsFull) {
+    return (
+      <div className="w-full rounded-[12px] p-[14px] space-y-2" style={{ background: "#0F2235", border: "1px solid #F5A623" }}>
+        <div className="flex items-center gap-2">
+          <Package size={20} style={{ color: "#F5A623" }} />
+          <span className="text-foreground font-bold text-sm">Baú de Batalha desbloqueado!</span>
+        </div>
+        <p className="text-xs" style={{ color: "#F5A623" }}>
+          Slots cheios! Você atingiu o limite de 5 baús no modo {modeLabel} hoje
+        </p>
+        <button onClick={() => navigate("/chests")} className="w-full h-10 rounded-[10px] flex items-center justify-center gap-1 font-bold text-[13px] transition-all hover:opacity-80" style={{ background: "#F5A623", color: "#0D1B2A" }}>
+          Abrir baús agora →
+        </button>
+      </div>
+    );
+  }
+
+  if (noChestEarned) {
+    return (
+      <div className="w-full rounded-[12px] p-[14px] space-y-2" style={{ background: "#0F2235", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <p className="text-ocean-muted text-xs">Limite diário atingido</p>
+        <p className="text-ocean-muted text-[11px]">
+          Você já ganhou 5 baús no modo {modeLabel} hoje. Volte amanhã para ganhar mais!
+        </p>
+        <button onClick={() => navigate("/chests")} className="w-full h-10 rounded-[10px] flex items-center justify-center gap-1 text-ocean-muted font-medium text-[13px] transition-all hover:text-foreground" style={{ border: "1px solid rgba(255,255,255,0.2)" }}>
+          Abrir baús pendentes →
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const PredictionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,13 +162,15 @@ const PredictionResult = () => {
   const savedRef = useRef(false);
   const [chestEarned, setChestEarned] = useState(false);
   const [chestSlotsFull, setChestSlotsFull] = useState(false);
+  const [noChestEarned, setNoChestEarned] = useState(false);
+  const [bausRestantes, setBausRestantes] = useState(0);
+  const [currentMode, setCurrentMode] = useState("classico");
 
   const isBattle = state?.modo === "batalha";
   const isPrecision = state?.modo === "precisao";
   const acertou = state?.acertou ?? true;
   const streak = (state as any)?.streak ?? user?.streak ?? 0;
 
-  // Save prediction + earn battle chest
   useEffect(() => {
     if (!state || savedRef.current) return;
     savedRef.current = true;
@@ -124,61 +185,55 @@ const PredictionResult = () => {
 
     if (isPrecision) {
       const s = state as PrecisionResultState;
-      mode = "precisao";
-      asset = "BTC";
-      priceInitial = s.precoInicial;
-      priceFinal = s.precoFinal;
-      variationReal = parseFloat(s.variacaoReal);
-      trophiesDelta = s.acertou ? s.retorno : -15;
+      mode = "precisao"; asset = "BTC"; priceInitial = s.precoInicial; priceFinal = s.precoFinal;
+      variationReal = parseFloat(s.variacaoReal); trophiesDelta = s.acertou ? s.retorno : -15;
     } else if (isBattle) {
       const s = state as BattleResultState;
-      mode = "batalha";
-      asset = s.moedaEscolhida;
-      trophiesDelta = s.acertou ? 40 : -15;
+      mode = "batalha"; asset = s.moedaEscolhida; trophiesDelta = s.acertou ? 40 : -15;
     } else {
       const s = state as ClassicResultState;
-      mode = "classico";
-      asset = s.ativo;
-      direction = s.direcao;
-      priceInitial = s.precoInicial;
-      priceFinal = s.precoFinal;
+      mode = "classico"; asset = s.ativo; direction = s.direcao;
+      priceInitial = s.precoInicial; priceFinal = s.precoFinal;
       variationReal = parseFloat(s.variacao);
-      const baseTrophies = 25;
-      const hasMultiplier = s.acertou && streak > 3;
+      const baseTrophies = 25; const hasMultiplier = s.acertou && streak > 3;
       trophiesDelta = s.acertou ? (hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies) : -15;
     }
 
+    setCurrentMode(mode);
+
     const doSave = async () => {
       await savePrediction({
-        mode, asset, direction,
-        price_initial: priceInitial,
-        price_final: priceFinal,
-        variation_real: variationReal,
-        result: acertou,
-        trophies_delta: trophiesDelta,
+        mode, asset, direction, price_initial: priceInitial, price_final: priceFinal,
+        variation_real: variationReal, result: acertou, trophies_delta: trophiesDelta,
       });
       await refreshUser();
 
-      // Award battle chest if correct
       if (acertou) {
-        const count = await countBattleChestsToday(mode);
-        if (count < 5) {
+        const countBefore = await countBattleChestsToday(mode);
+        if (countBefore < 5) {
           const earned = await earnBattleChest(mode);
-          setChestEarned(earned);
+          if (earned) {
+            const remaining = 5 - (countBefore + 1);
+            setBausRestantes(remaining);
+            setChestEarned(true);
+            if (remaining === 0) setChestSlotsFull(true);
+          }
         } else {
-          setChestSlotsFull(true);
+          setNoChestEarned(true);
         }
       }
     };
     doSave();
   }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
 
+  const chestProps = { acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode: currentMode, navigate };
+
   if (isPrecision) {
-    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
   }
 
   if (isBattle) {
-    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
+    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
   }
 
   // Classic mode
@@ -262,6 +317,10 @@ const PredictionResult = () => {
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
 
+        <ChestNotification {...chestProps} />
+
+        {chestProps.acertou && <div className="mb-1" />}
+
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
           target="_blank" rel="noopener noreferrer"
@@ -279,23 +338,15 @@ const PredictionResult = () => {
           <RotateCcw size={16} /> Jogar novamente
         </button>
       </div>
-
-      {acertou && chestEarned && (
-        <div className="relative z-10 mt-4 flex items-center gap-3 px-5 py-3 rounded-[12px] bg-card-surface animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-          <Package size={20} className="text-pacific animate-pulse" />
-          <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-        </div>
-      )}
-      {acertou && chestSlotsFull && (
-        <p className="relative z-10 mt-4 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-      )}
     </div>
   );
 };
 
 // ========== Battle Result ==========
 
-const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
+type ChestProps = { acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate> };
+
+const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
   const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -387,6 +438,9 @@ const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFu
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
+        <ChestNotification {...chestProps} />
+        {chestProps.acertou && <div className="mb-1" />}
+
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
           target="_blank" rel="noopener noreferrer"
@@ -403,16 +457,6 @@ const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFu
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
-
-        {acertou && chestEarned && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-            <Package size={20} className="text-pacific animate-pulse" />
-            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-          </div>
-        )}
-        {acertou && chestSlotsFull && (
-          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-        )}
       </div>
     </div>
   );
@@ -427,7 +471,7 @@ const RANGE_LABELS: Record<string, string> = {
   "2+": "> 2%",
 };
 
-const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
+const PrecisionResult = ({ state, navigate, user, streak, chestProps }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
   const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
   const trophies = acertou ? retorno : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -512,6 +556,9 @@ const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlot
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
+        <ChestNotification {...chestProps} />
+        {chestProps.acertou && <div className="mb-1" />}
+
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
           target="_blank" rel="noopener noreferrer"
@@ -528,16 +575,6 @@ const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlot
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
-
-        {acertou && chestEarned && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-            <Package size={20} className="text-pacific animate-pulse" />
-            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-          </div>
-        )}
-        {acertou && chestSlotsFull && (
-          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-        )}
       </div>
     </div>
   );
