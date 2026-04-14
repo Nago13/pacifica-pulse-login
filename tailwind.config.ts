@@ -12,8 +12,17 @@ export default {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+        "dm-sans": ['"DM Sans"', "sans-serif"],
+      },
     extend: {
       colors: {
+        pacific: "hsl(var(--pacific))",
+        "ocean-dark": "hsl(var(--ocean-dark))",
+        "ocean-deep": "hsl(var(--ocean-deep))",
+        "ocean-muted": "hsl(var(--ocean-muted))",
+        "ocean-button": "hsl(var(--ocean-button))",
+        "ocean-card": "hsl(var(--ocean-card))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
