@@ -136,9 +136,13 @@ const Dashboard = () => {
     }
   }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price]);
 
+  // Battle state - arena coins
+  const [battleArenaCoins, setBattleArenaCoins] = useState<string[]>([]);
+
   // Battle confirm
-  const handleBattleConfirm = (chosenCoin: string) => {
+  const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
     setBattleChoice(chosenCoin);
+    setBattleArenaCoins(arenaCoins);
     setBattleStartPrices({ ...coins });
     setBattleActive(true);
     setBattleCountdown(COUNTDOWN_SECONDS);
