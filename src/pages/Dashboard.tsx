@@ -262,7 +262,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto relative z-10">
         <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyPredictionActive} />
 
         {/* Active prediction card — visible across all modes */}
