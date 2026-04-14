@@ -14,6 +14,11 @@
     --ocean-muted: 200 30% 66%;
     --ocean-button: 203 42% 20%;
     --ocean-card: 203 42% 15%;
+    --success: 160 74% 42%;
+    --danger: 355 79% 59%;
+    --warning: 36 91% 55%;
+    --card-surface: 210 56% 13%;
+    --nav-bg: 212 55% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
