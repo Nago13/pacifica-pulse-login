@@ -3,18 +3,29 @@ import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Clock } from "luci
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
+import BattleMode from "@/components/BattleMode";
 
-const API_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true";
+const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true";
 const COUNTDOWN_SECONDS = 60;
+
+export interface CoinData {
+  price: number;
+  change24h: number;
+}
+
+export type CoinPrices = {
+  bitcoin: CoinData | null;
+  ethereum: CoinData | null;
+  solana: CoinData | null;
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [price, setPrice] = useState<number | null>(null);
-  const [change24h, setChange24h] = useState<number | null>(null);
+  const [coins, setCoins] = useState<CoinPrices>({ bitcoin: null, ethereum: null, solana: null });
   const [flashing, setFlashing] = useState(false);
   const [apiError, setApiError] = useState(false);
 
-  // Prediction state
+  // Classic prediction state
   const [predictionActive, setPredictionActive] = useState(false);
   const [predictionDir, setPredictionDir] = useState<"up" | "down" | null>(null);
   const [predictionPrice, setPredictionPrice] = useState<number | null>(null);
@@ -22,33 +33,41 @@ const Dashboard = () => {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [gameMode, setGameMode] = useState<GameMode>("classic");
 
-  const fetchPrice = useCallback(async (): Promise<number | null> => {
+  // Battle state
+  const [battleActive, setBattleActive] = useState(false);
+  const [battleCountdown, setBattleCountdown] = useState(0);
+  const battleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [battleChoice, setBattleChoice] = useState<string | null>(null);
+  const [battleStartPrices, setBattleStartPrices] = useState<CoinPrices | null>(null);
+
+  const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_URL_MULTI);
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
-      const newPrice = data.bitcoin.usd as number;
-      const newChange = data.bitcoin.usd_24h_change as number;
-      setPrice(newPrice);
-      setChange24h(newChange);
+      const newCoins: CoinPrices = {
+        bitcoin: { price: data.bitcoin.usd, change24h: data.bitcoin.usd_24h_change },
+        ethereum: { price: data.ethereum.usd, change24h: data.ethereum.usd_24h_change },
+        solana: { price: data.solana.usd, change24h: data.solana.usd_24h_change },
+      };
+      setCoins(newCoins);
       setApiError(false);
       setFlashing(true);
       setTimeout(() => setFlashing(false), 300);
-      return newPrice;
+      return newCoins;
     } catch {
       setApiError(true);
       return null;
     }
   }, []);
 
-  // Auto-refresh price every 30s (only when no prediction active)
   useEffect(() => {
-    fetchPrice();
+    fetchPrices();
     const interval = setInterval(() => {
-      if (!predictionActive) fetchPrice();
+      if (!predictionActive && !battleActive) fetchPrices();
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchPrice, predictionActive]);
+  }, [fetchPrices, predictionActive, battleActive]);
 
   const formatTimer = useCallback((s: number) => {
     const m = Math.floor(s / 60);
@@ -59,17 +78,15 @@ const Dashboard = () => {
   const formatPrice = (p: number) =>
     p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const handlePress = (dir: "up" | "down") => {
-    if (predictionActive || price === null) return;
-    setPredictionDir(dir);
-    setPredictionPrice(price);
-    setPredictionActive(true);
-    setCountdown(COUNTDOWN_SECONDS);
+  // Derived BTC values for classic mode
+  const price = coins.bitcoin?.price ?? null;
+  const change24h = coins.bitcoin?.change24h ?? null;
 
-    countdownRef.current = setInterval(() => {
-      setCountdown((prev) => {
+  const startCountdown = (ref: React.MutableRefObject<ReturnType<typeof setInterval> | null>, setter: React.Dispatch<React.SetStateAction<number>>) => {
+    ref.current = setInterval(() => {
+      setter((prev) => {
         if (prev <= 1) {
-          if (countdownRef.current) clearInterval(countdownRef.current);
+          if (ref.current) clearInterval(ref.current);
           return 0;
         }
         return prev - 1;
@@ -77,21 +94,29 @@ const Dashboard = () => {
     }, 1000);
   };
 
-  // When countdown hits 0 and prediction is active, resolve
+  const handlePress = (dir: "up" | "down") => {
+    if (predictionActive || price === null) return;
+    setPredictionDir(dir);
+    setPredictionPrice(price);
+    setPredictionActive(true);
+    setCountdown(COUNTDOWN_SECONDS);
+    startCountdown(countdownRef, setCountdown);
+  };
+
+  // Classic resolve
   useEffect(() => {
     if (countdown === 0 && predictionActive && predictionPrice !== null && predictionDir) {
       const resolve = async () => {
-        const finalPrice = await fetchPrice();
-        const usedPrice = finalPrice ?? price;
-        if (usedPrice === null) return;
+        const result = await fetchPrices();
+        const finalPrice = result?.bitcoin?.price ?? price;
+        if (finalPrice === null) return;
 
-        const variacao = ((usedPrice - predictionPrice) / predictionPrice) * 100;
-        const priceWentUp = usedPrice > predictionPrice;
+        const variacao = ((finalPrice - predictionPrice) / predictionPrice) * 100;
+        const priceWentUp = finalPrice > predictionPrice;
         const acertou =
           (predictionDir === "up" && priceWentUp) ||
           (predictionDir === "down" && !priceWentUp);
 
-        // Reset prediction state
         setPredictionActive(false);
         setPredictionDir(null);
         setPredictionPrice(null);
@@ -103,21 +128,75 @@ const Dashboard = () => {
             ativo: "BTC",
             direcao: predictionDir,
             precoInicial: predictionPrice,
-            precoFinal: usedPrice,
+            precoFinal: finalPrice,
           },
         });
       };
       resolve();
     }
-  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrice, navigate, price]);
+  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price]);
 
-  // Cleanup interval on unmount
+  // Battle confirm
+  const handleBattleConfirm = (chosenCoin: string) => {
+    setBattleChoice(chosenCoin);
+    setBattleStartPrices({ ...coins });
+    setBattleActive(true);
+    setBattleCountdown(COUNTDOWN_SECONDS);
+    startCountdown(battleCountdownRef, setBattleCountdown);
+  };
+
+  // Battle resolve
+  useEffect(() => {
+    if (battleCountdown === 0 && battleActive && battleStartPrices && battleChoice) {
+      const resolve = async () => {
+        const result = await fetchPrices();
+        const finalCoins = result ?? coins;
+
+        const calcVar = (coin: keyof CoinPrices) => {
+          const start = battleStartPrices[coin]?.price;
+          const end = finalCoins[coin]?.price;
+          if (!start || !end) return 0;
+          return ((end - start) / start) * 100;
+        };
+
+        const varBTC = calcVar("bitcoin");
+        const varETH = calcVar("ethereum");
+        const varSOL = calcVar("solana");
+
+        const variations: Record<string, number> = { BTC: varBTC, ETH: varETH, SOL: varSOL };
+        const moedaVencedora = Object.entries(variations).sort((a, b) => b[1] - a[1])[0][0];
+        const coinIdMap: Record<string, string> = { BTC: "bitcoin", ETH: "ethereum", SOL: "solana" };
+        const chosenTicker = Object.entries(coinIdMap).find(([, v]) => v === battleChoice)?.[0] ?? "BTC";
+
+        setBattleActive(false);
+        setBattleChoice(null);
+        setBattleStartPrices(null);
+
+        navigate("/result", {
+          state: {
+            modo: "batalha",
+            moedaEscolhida: chosenTicker,
+            moedaVencedora,
+            acertou: chosenTicker === moedaVencedora,
+            variacaoBTC: (varBTC >= 0 ? "+" : "") + varBTC.toFixed(2) + "%",
+            variacaoETH: (varETH >= 0 ? "+" : "") + varETH.toFixed(2) + "%",
+            variacaoSOL: (varSOL >= 0 ? "+" : "") + varSOL.toFixed(2) + "%",
+          },
+        });
+      };
+      resolve();
+    }
+  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins]);
+
+  // Cleanup
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
+      if (battleCountdownRef.current) clearInterval(battleCountdownRef.current);
     };
   }, []);
 
+  const anyActive = predictionActive || battleActive;
   const timerLow = countdown < 10 && countdown > 0;
 
   return (
@@ -141,7 +220,7 @@ const Dashboard = () => {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
-        <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={predictionActive} />
+        <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyActive} />
 
         {gameMode === "classic" ? (
           <>
@@ -203,9 +282,7 @@ const Dashboard = () => {
                   onClick={() => handlePress("up")}
                   disabled={predictionActive || price === null}
                   className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-success bg-[hsl(160,53%,12%)] ${
-                    predictionActive
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-success hover:text-ocean-dark active:animate-press"
+                    predictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-success hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "up" && predictionActive ? "!opacity-100 !bg-success !text-ocean-dark" : ""}`}
                 >
                   <ArrowUp size={20} className={predictionDir === "up" && predictionActive ? "text-ocean-dark" : "text-success"} /> SOBE
@@ -214,9 +291,7 @@ const Dashboard = () => {
                   onClick={() => handlePress("down")}
                   disabled={predictionActive || price === null}
                   className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-danger bg-[hsl(355,53%,15%)] ${
-                    predictionActive
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-danger hover:text-ocean-dark active:animate-press"
+                    predictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-danger hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "down" && predictionActive ? "!opacity-100 !bg-danger !text-ocean-dark" : ""}`}
                 >
                   <ArrowDown size={20} className={predictionDir === "down" && predictionActive ? "text-ocean-dark" : "text-danger"} /> CAI
@@ -246,12 +321,21 @@ const Dashboard = () => {
               ))}
             </div>
           </>
+        ) : gameMode === "battle" ? (
+          <BattleMode
+            coins={coins}
+            battleActive={battleActive}
+            battleCountdown={battleCountdown}
+            battleChoice={battleChoice}
+            onConfirm={handleBattleConfirm}
+            formatTimer={formatTimer}
+          />
         ) : (
           <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-8 flex flex-col items-center justify-center gap-3" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
             <Clock size={40} className="text-pacific opacity-50" />
             <span className="text-foreground text-lg font-bold">Em breve...</span>
             <span className="text-ocean-muted text-sm text-center">
-              O modo {gameMode === "battle" ? "Batalha" : "Precisão"} está sendo desenvolvido. Fique ligado!
+              O modo Precisão está sendo desenvolvido. Fique ligado!
             </span>
           </div>
         )}
