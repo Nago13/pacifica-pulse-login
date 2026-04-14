@@ -235,7 +235,7 @@ const Dashboard = () => {
 
   const OceanBubbles = () => (
     <div className="ocean-bubbles">
-      {Array.from({ length: 10 }).map((_, i) => (
+      {Array.from({ length: 20 }).map((_, i) => (
         <div key={i} className="bubble" />
       ))}
     </div>
@@ -244,7 +244,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col relative">
       <OceanBubbles />
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+      <header className="flex items-center justify-between px-4 py-3 sm:px-6 relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-sm">{initials}</div>
           <span className="text-foreground font-medium text-sm">{user?.username ?? "Pedro"}</span>
