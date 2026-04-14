@@ -34,6 +34,11 @@ export interface ActivePrediction {
   priceInitial: number;
   startedAt: number;
   durationSeconds: number;
+  // Battle-specific
+  assetsArena?: string[];
+  pricesInitial?: Record<string, number>;
+  // Precision-specific (direction holds the range like "0.5-2")
+  precisionReward?: number;
 }
 
 interface UserContextValue {
@@ -100,6 +105,26 @@ const BATTLE_REWARDS: Record<string, ChestReward[]> = {
   ],
 };
 
+const PRECISION_REWARDS: Record<string, { win: number; loss: number }> = {
+  "0-0.1": { win: 10, loss: -15 },
+  "0.1-0.5": { win: 25, loss: -15 },
+  "0.5-2": { win: 60, loss: -15 },
+  "2+": { win: 150, loss: -15 },
+};
+
+const PRECISION_RANGE_BOUNDS: Record<string, [number, number]> = {
+  "0-0.1": [0, 0.1],
+  "0.1-0.5": [0.1, 0.5],
+  "0.5-2": [0.5, 2],
+  "2+": [2, Infinity],
+};
+
+const COIN_ID_MAP: Record<string, string> = {
+  bitcoin: "BTC",
+  ethereum: "ETH",
+  solana: "SOL",
+};
+
 const ACTIVE_PREDICTION_KEY = "activePrediction";
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -113,7 +138,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resolvingRef = useRef(false);
 
-  // Wrap setActivePrediction to also persist to localStorage
   const setActivePrediction = useCallback((p: ActivePrediction | null) => {
     setActivePredictionState(p);
     if (p) {
@@ -146,7 +170,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Timer countdown + auto-resolve
+  // Timer countdown
   useEffect(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -181,63 +205,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const resolve = async () => {
       try {
-        const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
-        );
-        const data = await res.json();
-        const precoFinal = data.bitcoin.usd;
-        const variacao = ((precoFinal - activePrediction.priceInitial) / activePrediction.priceInitial) * 100;
-        const acertou =
-          activePrediction.direction === "up" ? variacao > 0 : variacao < 0;
-        const trofeusGanhos = acertou ? 25 : -15;
+        const mode = activePrediction.mode;
 
-        // Save prediction
-        if (user && user.id !== "local") {
-          await supabase.from("predictions").insert({
-            user_id: user.id,
-            mode: activePrediction.mode,
-            asset: activePrediction.asset,
-            direction: activePrediction.direction,
-            price_initial: activePrediction.priceInitial,
-            price_final: precoFinal,
-            variation_real: Math.abs(variacao),
-            result: acertou,
-            trophies_delta: trofeusGanhos,
-          });
-
-          const newTrophies = Math.max(0, user.trophies + trofeusGanhos);
-          const newStreak = acertou ? user.streak + 1 : 0;
-          const newLeague = calcLeague(newTrophies);
-
-          await supabase
-            .from("users")
-            .update({
-              trophies: newTrophies,
-              streak: newStreak,
-              league: newLeague,
-              last_played: new Date().toISOString().split("T")[0],
-            })
-            .eq("id", user.id);
-
-          setUser((prev) =>
-            prev ? { ...prev, trophies: newTrophies, streak: newStreak, league: newLeague } : prev
-          );
+        if (mode === "classico") {
+          await resolveClassic();
+        } else if (mode === "batalha") {
+          await resolveBattle();
+        } else if (mode === "precisao") {
+          await resolvePrecision();
         }
-
-        setActivePredictionState(null);
-        localStorage.removeItem(ACTIVE_PREDICTION_KEY);
-
-        navigate("/result", {
-          state: {
-            acertou,
-            variacao: Math.abs(variacao).toFixed(2),
-            ativo: activePrediction.asset,
-            direcao: activePrediction.direction,
-            precoInicial: activePrediction.priceInitial,
-            precoFinal,
-            streak: user?.streak ?? 0,
-          },
-        });
       } catch (err) {
         console.error("Auto-resolve prediction error:", err);
         setActivePredictionState(null);
@@ -245,6 +221,168 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } finally {
         resolvingRef.current = false;
       }
+    };
+
+    const resolveClassic = async () => {
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+      );
+      const data = await res.json();
+      const precoFinal = data.bitcoin.usd;
+      const variacao = ((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100;
+      const acertou = activePrediction!.direction === "up" ? variacao > 0 : variacao < 0;
+      const trofeusGanhos = acertou ? 25 : -15;
+
+      await saveAndNavigate({
+        mode: "classico",
+        asset: activePrediction!.asset,
+        direction: activePrediction!.direction,
+        priceFinal: precoFinal,
+        variacao: Math.abs(variacao),
+        acertou,
+        trofeusGanhos,
+        navState: {
+          acertou,
+          variacao: Math.abs(variacao).toFixed(2),
+          ativo: activePrediction!.asset,
+          direcao: activePrediction!.direction,
+          precoInicial: activePrediction!.priceInitial,
+          precoFinal,
+          streak: user?.streak ?? 0,
+        },
+      });
+    };
+
+    const resolveBattle = async () => {
+      const arenaIds = activePrediction!.assetsArena ?? [];
+      const coinIds = arenaIds.join(",");
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd`
+      );
+      const data = await res.json();
+      const pricesInitial = activePrediction!.pricesInitial ?? {};
+
+      const arenaVariations: Record<string, number> = {};
+      for (const coinId of arenaIds) {
+        const ticker = COIN_ID_MAP[coinId] ?? coinId.toUpperCase();
+        const startPrice = pricesInitial[ticker] ?? 0;
+        const endPrice = data[coinId]?.usd ?? startPrice;
+        arenaVariations[ticker] = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
+      }
+
+      const moedaVencedora = Object.entries(arenaVariations).sort((a, b) => b[1] - a[1])[0][0];
+      const chosenTicker = activePrediction!.direction;
+      const acertou = chosenTicker === moedaVencedora;
+      const trofeusGanhos = acertou ? 40 : -15;
+
+      const navState: Record<string, unknown> = {
+        modo: "batalha",
+        moedaEscolhida: chosenTicker,
+        moedaVencedora,
+        acertou,
+        arenaCoins: Object.keys(arenaVariations),
+        streak: user?.streak ?? 0,
+      };
+      for (const [ticker, val] of Object.entries(arenaVariations)) {
+        navState[`variacao${ticker}`] = (val >= 0 ? "+" : "") + val.toFixed(2) + "%";
+      }
+
+      await saveAndNavigate({
+        mode: "batalha",
+        asset: activePrediction!.asset,
+        direction: activePrediction!.direction,
+        priceFinal: 0,
+        variacao: 0,
+        acertou,
+        trofeusGanhos,
+        navState,
+      });
+    };
+
+    const resolvePrecision = async () => {
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+      );
+      const data = await res.json();
+      const precoFinal = data.bitcoin.usd;
+      const variacaoAbs = Math.abs(((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100);
+      const faixaEscolhida = activePrediction!.direction;
+
+      const bounds = PRECISION_RANGE_BOUNDS[faixaEscolhida];
+      const acertou = bounds ? variacaoAbs >= bounds[0] && variacaoAbs < bounds[1] : false;
+
+      let faixaReal = "";
+      for (const [key, [lo, hi]] of Object.entries(PRECISION_RANGE_BOUNDS)) {
+        if (variacaoAbs >= lo && variacaoAbs < hi) { faixaReal = key; break; }
+      }
+
+      const rewardInfo = PRECISION_REWARDS[faixaEscolhida] ?? { win: 10, loss: -15 };
+      const trofeusGanhos = acertou ? rewardInfo.win : rewardInfo.loss;
+
+      await saveAndNavigate({
+        mode: "precisao",
+        asset: "BTC",
+        direction: faixaEscolhida,
+        priceFinal: precoFinal,
+        variacao: variacaoAbs,
+        acertou,
+        trofeusGanhos,
+        navState: {
+          modo: "precisao",
+          faixaEscolhida,
+          faixaReal,
+          variacaoReal: variacaoAbs.toFixed(2),
+          acertou,
+          retorno: activePrediction!.precisionReward ?? rewardInfo.win,
+          precoInicial: activePrediction!.priceInitial,
+          precoFinal,
+          streak: user?.streak ?? 0,
+        },
+      });
+    };
+
+    const saveAndNavigate = async ({
+      mode, asset, direction, priceFinal, variacao, acertou, trofeusGanhos, navState,
+    }: {
+      mode: string; asset: string; direction: string; priceFinal: number;
+      variacao: number; acertou: boolean; trofeusGanhos: number; navState: Record<string, unknown>;
+    }) => {
+      if (user && user.id !== "local") {
+        await supabase.from("predictions").insert({
+          user_id: user.id,
+          mode,
+          asset,
+          direction,
+          price_initial: activePrediction!.priceInitial,
+          price_final: priceFinal,
+          variation_real: variacao,
+          result: acertou,
+          trophies_delta: trofeusGanhos,
+        });
+
+        const newTrophies = Math.max(0, user.trophies + trofeusGanhos);
+        const newStreak = acertou ? user.streak + 1 : 0;
+        const newLeague = calcLeague(newTrophies);
+
+        await supabase
+          .from("users")
+          .update({
+            trophies: newTrophies,
+            streak: newStreak,
+            league: newLeague,
+            last_played: new Date().toISOString().split("T")[0],
+          })
+          .eq("id", user.id);
+
+        setUser((prev) =>
+          prev ? { ...prev, trophies: newTrophies, streak: newStreak, league: newLeague } : prev
+        );
+      }
+
+      setActivePredictionState(null);
+      localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+
+      navigate("/result", { state: navState });
     };
 
     resolve();

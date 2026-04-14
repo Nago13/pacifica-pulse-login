@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -23,13 +23,6 @@ export type CoinPrices = {
   solana: CoinData | null;
 };
 
-const RANGE_BOUNDS: Record<PrecisionRange, [number, number]> = {
-  "0-0.1": [0, 0.1],
-  "0.1-0.5": [0.1, 0.5],
-  "0.5-2": [0.5, 2],
-  "2+": [2, Infinity],
-};
-
 const leagueBadgeColors: Record<string, string> = {
   Bronze: "bg-[#CD7F32] text-ocean-dark",
   Prata: "bg-[#A8B2BB] text-ocean-dark",
@@ -37,6 +30,12 @@ const leagueBadgeColors: Record<string, string> = {
   Platina: "bg-pacific text-ocean-dark",
   Diamante: "bg-[#B9F2FF] text-ocean-dark",
   "Lendária": "bg-danger text-foreground",
+};
+
+const COIN_ID_MAP: Record<string, string> = {
+  bitcoin: "BTC",
+  ethereum: "ETH",
+  solana: "SOL",
 };
 
 const Dashboard = () => {
@@ -51,40 +50,28 @@ const Dashboard = () => {
   const [chestReward, setChestReward] = useState<{ tipo: string; valor: number } | null>(null);
   const [showChestModal, setShowChestModal] = useState(false);
 
-  // Classic prediction now uses global context (activePrediction)
-  const predictionActive = activePrediction !== null && activePrediction.mode === "classico";
+  const [gameMode, setGameMode] = useState<GameMode>("classic");
+
+  // Derive active states from global context
+  const anyPredictionActive = activePrediction !== null;
+  const predictionActive = activePrediction?.mode === "classico";
+  const battleActive = activePrediction?.mode === "batalha";
+  const precisionActive = activePrediction?.mode === "precisao";
   const predictionDir = activePrediction?.direction as "up" | "down" | null ?? null;
   const predictionPrice = activePrediction?.priceInitial ?? null;
-  const countdown = predictionActive ? timeRemaining : 0;
-  const [gameMode, setGameMode] = useState<GameMode>("classic");
+  const countdown = anyPredictionActive ? timeRemaining : 0;
 
   // Stats state
   const [acertosHoje, setAcertosHoje] = useState<string>("—");
   const [taxaAcerto, setTaxaAcerto] = useState<string>("—");
   const [ranking, setRanking] = useState<string>("—");
 
-  // Battle state
-  const [battleActive, setBattleActive] = useState(false);
-  const [battleCountdown, setBattleCountdown] = useState(0);
-  const battleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [battleChoice, setBattleChoice] = useState<string | null>(null);
-  const [battleStartPrices, setBattleStartPrices] = useState<CoinPrices | null>(null);
-  const [battleArenaCoins, setBattleArenaCoins] = useState<string[]>([]);
-
-  // Precision state
-  const [precisionActive, setPrecisionActive] = useState(false);
-  const [precisionCountdown, setPrecisionCountdown] = useState(0);
-  const precisionCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [precisionRange, setPrecisionRange] = useState<PrecisionRange | null>(null);
-  const [precisionPrice, setPrecisionPrice] = useState<number | null>(null);
-  const [precisionReward, setPrecisionReward] = useState(0);
-
   // Check chest availability
   useEffect(() => {
     checkChest().then(setChestAvailable);
   }, [checkChest]);
 
-  // Fetch stats (acertos hoje, taxa, ranking)
+  // Fetch stats
   const fetchStats = useCallback(async () => {
     if (!user || user.id === "local") return;
     try {
@@ -142,10 +129,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(() => {
-      if (!predictionActive && !battleActive && !precisionActive) fetchPrices();
+      if (!anyPredictionActive) fetchPrices();
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchPrices, predictionActive, battleActive, precisionActive]);
+  }, [fetchPrices, anyPredictionActive]);
 
   const formatTimer = useCallback((s: number) => {
     const m = Math.floor(s / 60);
@@ -159,21 +146,9 @@ const Dashboard = () => {
   const price = coins.bitcoin?.price ?? null;
   const change24h = coins.bitcoin?.change24h ?? null;
 
-  const startCountdown = (ref: React.MutableRefObject<ReturnType<typeof setInterval> | null>, setter: React.Dispatch<React.SetStateAction<number>>) => {
-    ref.current = setInterval(() => {
-      setter((prev) => {
-        if (prev <= 1) {
-          if (ref.current) clearInterval(ref.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  // ── Classic ── (now uses global context for persistence)
+  // ── Classic ──
   const handlePress = (dir: "up" | "down") => {
-    if (predictionActive || price === null) return;
+    if (anyPredictionActive || price === null) return;
     setActivePrediction({
       mode: "classico",
       asset: "BTC",
@@ -184,121 +159,78 @@ const Dashboard = () => {
     });
   };
 
-  // Classic resolution is handled by UserContext auto-resolve
-
   // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
-    setBattleChoice(chosenCoin);
-    setBattleArenaCoins(arenaCoins);
-    setBattleStartPrices({ ...coins });
-    setBattleActive(true);
-    setBattleCountdown(COUNTDOWN_SECONDS);
-    startCountdown(battleCountdownRef, setBattleCountdown);
-  };
-
-  useEffect(() => {
-    if (battleCountdown === 0 && battleActive && battleStartPrices && battleChoice) {
-      const resolve = async () => {
-        const result = await fetchPrices();
-        const finalCoins = result ?? coins;
-        const tickerMap: Record<string, string> = { bitcoin: "BTC", ethereum: "ETH", solana: "SOL" };
-        const calcVar = (coin: keyof CoinPrices) => {
-          const start = battleStartPrices[coin]?.price;
-          const end = finalCoins[coin]?.price;
-          if (!start || !end) return 0;
-          return ((end - start) / start) * 100;
-        };
-        const arenaVariations: Record<string, number> = {};
-        for (const coinId of battleArenaCoins) {
-          arenaVariations[tickerMap[coinId] ?? coinId.toUpperCase()] = calcVar(coinId as keyof CoinPrices);
-        }
-        const moedaVencedora = Object.entries(arenaVariations).sort((a, b) => b[1] - a[1])[0][0];
-        const chosenTicker = tickerMap[battleChoice] ?? "BTC";
-        setBattleActive(false);
-        setBattleChoice(null);
-        setBattleStartPrices(null);
-        setBattleArenaCoins([]);
-        const stateData: Record<string, unknown> = {
-          modo: "batalha", moedaEscolhida: chosenTicker, moedaVencedora,
-          acertou: chosenTicker === moedaVencedora, arenaCoins: Object.keys(arenaVariations),
-          streak: user?.streak ?? 0,
-        };
-        for (const [ticker, val] of Object.entries(arenaVariations)) {
-          stateData[`variacao${ticker}`] = (val >= 0 ? "+" : "") + val.toFixed(2) + "%";
-        }
-        navigate("/result", { state: stateData });
-      };
-      resolve();
+    if (anyPredictionActive) return;
+    const chosenTicker = COIN_ID_MAP[chosenCoin] ?? chosenCoin.toUpperCase();
+    const pricesInitial: Record<string, number> = {};
+    for (const coinId of arenaCoins) {
+      const ticker = COIN_ID_MAP[coinId] ?? coinId.toUpperCase();
+      const coinData = coins[coinId as keyof CoinPrices];
+      pricesInitial[ticker] = coinData?.price ?? 0;
     }
-  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins, battleArenaCoins, user]);
+
+    setActivePrediction({
+      mode: "batalha",
+      asset: chosenTicker,
+      direction: chosenTicker,
+      priceInitial: pricesInitial[chosenTicker] ?? 0,
+      startedAt: Date.now(),
+      durationSeconds: COUNTDOWN_SECONDS,
+      assetsArena: arenaCoins,
+      pricesInitial,
+    });
+  };
 
   // ── Precision ──
   const handlePrecisionConfirm = (range: PrecisionRange, reward: number) => {
-    if (price === null) return;
-    setPrecisionRange(range);
-    setPrecisionPrice(price);
-    setPrecisionReward(reward);
-    setPrecisionActive(true);
-    setPrecisionCountdown(COUNTDOWN_SECONDS);
-    startCountdown(precisionCountdownRef, setPrecisionCountdown);
+    if (anyPredictionActive || price === null) return;
+    setActivePrediction({
+      mode: "precisao",
+      asset: "BTC",
+      direction: range,
+      priceInitial: price,
+      startedAt: Date.now(),
+      durationSeconds: COUNTDOWN_SECONDS,
+      precisionReward: reward,
+    });
   };
 
-  useEffect(() => {
-    if (precisionCountdown === 0 && precisionActive && precisionPrice !== null && precisionRange) {
-      const resolve = async () => {
-        const result = await fetchPrices();
-        const finalPrice = result?.bitcoin?.price ?? price;
-        if (finalPrice === null) return;
-        const variacaoAbs = Math.abs(((finalPrice - precisionPrice) / precisionPrice) * 100);
-        const [min, max] = RANGE_BOUNDS[precisionRange];
-        const acertou = variacaoAbs >= min && variacaoAbs < max;
-
-        let faixaReal = "";
-        for (const [key, [lo, hi]] of Object.entries(RANGE_BOUNDS)) {
-          if (variacaoAbs >= lo && variacaoAbs < hi) { faixaReal = key; break; }
-        }
-
-        setPrecisionActive(false);
-        const savedRange = precisionRange;
-        const savedPrice = precisionPrice;
-        const savedReward = precisionReward;
-        setPrecisionRange(null);
-        setPrecisionPrice(null);
-        setPrecisionReward(0);
-
-        navigate("/result", {
-          state: {
-            modo: "precisao",
-            faixaEscolhida: savedRange,
-            faixaReal,
-            variacaoReal: variacaoAbs.toFixed(2),
-            acertou,
-            retorno: savedReward,
-            precoInicial: savedPrice,
-            precoFinal: finalPrice,
-            streak: user?.streak ?? 0,
-          },
-        });
-      };
-      resolve();
-    }
-  }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price, user]);
-
-  // Cleanup (battle/precision only — classic uses context)
-  useEffect(() => {
-    return () => {
-      if (battleCountdownRef.current) clearInterval(battleCountdownRef.current);
-      if (precisionCountdownRef.current) clearInterval(precisionCountdownRef.current);
-    };
-  }, []);
-
-  const anyActive = predictionActive || battleActive || precisionActive;
   const timerLow = countdown < 10 && countdown > 0;
 
   const userTrophies = user?.trophies ?? 0;
   const userStreak = user?.streak ?? 0;
   const userLeague = user?.league ?? "Bronze";
   const initials = (user?.username ?? "PE").slice(0, 2).toUpperCase();
+
+  // Helper to get prediction label
+  const getPredictionLabel = () => {
+    if (!activePrediction) return "";
+    if (activePrediction.mode === "classico") {
+      return predictionDir === "up" ? "SOBE ↑" : "CAI ↓";
+    }
+    if (activePrediction.mode === "batalha") {
+      return `Apostou em ${activePrediction.direction}`;
+    }
+    if (activePrediction.mode === "precisao") {
+      const rangeLabels: Record<string, string> = {
+        "0-0.1": "< 0.1%",
+        "0.1-0.5": "0.1% – 0.5%",
+        "0.5-2": "0.5% – 2%",
+        "2+": "> 2%",
+      };
+      return `Faixa ${rangeLabels[activePrediction.direction] ?? activePrediction.direction}`;
+    }
+    return "";
+  };
+
+  const getModeLabel = () => {
+    if (!activePrediction) return "";
+    if (activePrediction.mode === "classico") return "Clássico";
+    if (activePrediction.mode === "batalha") return "Batalha";
+    if (activePrediction.mode === "precisao") return "Precisão";
+    return "";
+  };
 
   return (
     <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col">
@@ -321,10 +253,10 @@ const Dashboard = () => {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
-        <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyActive} />
+        <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyPredictionActive} />
 
         {/* Active prediction card — visible across all modes */}
-        {predictionActive && (
+        {anyPredictionActive && (
           <div
             className="w-full max-w-lg rounded-[16px] p-4 flex items-center gap-3"
             style={{
@@ -337,13 +269,13 @@ const Dashboard = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-foreground text-sm font-bold">
-                Palpite em andamento — {predictionDir === "up" ? "SOBE ↑" : "CAI ↓"}
+                {getModeLabel()} — {getPredictionLabel()}
               </p>
               <p className="text-ocean-muted text-xs">
                 Aguardando resultado...
               </p>
             </div>
-            <span className={`font-bold text-lg tabular-nums shrink-0 ${countdown < 10 ? "text-danger" : "text-pacific"}`}>
+            <span className={`font-bold text-lg tabular-nums shrink-0 ${timerLow ? "text-danger" : "text-pacific"}`}>
               {formatTimer(countdown)}
             </span>
           </div>
@@ -407,18 +339,18 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handlePress("up")}
-                  disabled={predictionActive || price === null}
+                  disabled={anyPredictionActive || price === null}
                   className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-success bg-[hsl(160,53%,12%)] ${
-                    predictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-success hover:text-ocean-dark active:animate-press"
+                    anyPredictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-success hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "up" && predictionActive ? "!opacity-100 !bg-success !text-ocean-dark" : ""}`}
                 >
                   <ArrowUp size={20} className={predictionDir === "up" && predictionActive ? "text-ocean-dark" : "text-success"} /> SOBE
                 </button>
                 <button
                   onClick={() => handlePress("down")}
-                  disabled={predictionActive || price === null}
+                  disabled={anyPredictionActive || price === null}
                   className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-danger bg-[hsl(355,53%,15%)] ${
-                    predictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-danger hover:text-ocean-dark active:animate-press"
+                    anyPredictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-danger hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "down" && predictionActive ? "!opacity-100 !bg-danger !text-ocean-dark" : ""}`}
                 >
                   <ArrowDown size={20} className={predictionDir === "down" && predictionActive ? "text-ocean-dark" : "text-danger"} /> CAI
@@ -452,8 +384,8 @@ const Dashboard = () => {
           <BattleMode
             coins={coins}
             battleActive={battleActive}
-            battleCountdown={battleCountdown}
-            battleChoice={battleChoice}
+            battleCountdown={countdown}
+            battleChoice={activePrediction?.mode === "batalha" ? activePrediction.direction : null}
             onConfirm={handleBattleConfirm}
             formatTimer={formatTimer}
           />
@@ -464,9 +396,9 @@ const Dashboard = () => {
             flashing={flashing}
             apiError={apiError}
             precisionActive={precisionActive}
-            precisionCountdown={precisionCountdown}
-            precisionRange={precisionRange}
-            precisionPrice={precisionPrice}
+            precisionCountdown={countdown}
+            precisionRange={activePrediction?.mode === "precisao" ? activePrediction.direction as PrecisionRange : null}
+            precisionPrice={activePrediction?.mode === "precisao" ? activePrediction.priceInitial : null}
             onConfirm={handlePrecisionConfirm}
             formatTimer={formatTimer}
             formatPrice={formatPrice}
