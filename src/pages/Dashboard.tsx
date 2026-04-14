@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Flame, Trophy, ArrowUp, ArrowDown, Home, Award, BarChart3, User, Package } from "lucide-react";
+import { Flame, Trophy, ArrowUp, ArrowDown, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
 
 const INITIAL_PRICE = 83420.5;
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [price, setPrice] = useState(INITIAL_PRICE);
   const [flashing, setFlashing] = useState(false);
-  const [timer, setTimer] = useState(3512); // 58:32 in seconds
+  const [timer, setTimer] = useState(3512);
   const [pressedBtn, setPressedBtn] = useState<"up" | "down" | null>(null);
 
-  // Price update every 5s
   useEffect(() => {
     const interval = setInterval(() => {
       setPrice((p) => {
@@ -22,7 +24,6 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Timer countdown
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer((t) => (t > 0 ? t - 1 : 0));
@@ -43,17 +44,17 @@ const Dashboard = () => {
 
   const handlePress = (dir: "up" | "down") => {
     setPressedBtn(dir);
-    setTimeout(() => setPressedBtn(null), 150);
+    setTimeout(() => {
+      setPressedBtn(null);
+      navigate("/result");
+    }, 150);
   };
 
   return (
     <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col">
-      {/* Top Bar */}
       <header className="flex items-center justify-between px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-sm">
-            PE
-          </div>
+          <div className="w-10 h-10 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-sm">PE</div>
           <span className="text-foreground font-medium text-sm">Pedro</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -65,25 +66,16 @@ const Dashboard = () => {
             <Trophy size={16} className="text-pacific" />
             <span className="text-foreground text-sm font-bold">847</span>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-warning text-ocean-dark text-xs font-bold">
-            Ouro
-          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-warning text-ocean-dark text-xs font-bold">Ouro</span>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
-        {/* Prediction Card */}
         <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
-          {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <span className="text-ocean-muted text-xs uppercase tracking-wider font-medium">Previsão do dia</span>
-            <span className={`font-bold text-lg ${timerLow ? "text-danger" : "text-pacific"}`}>
-              {formatTimer(timer)}
-            </span>
+            <span className={`font-bold text-lg ${timerLow ? "text-danger" : "text-pacific"}`}>{formatTimer(timer)}</span>
           </div>
-
-          {/* Asset */}
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
               <span className="text-warning font-bold text-lg">₿</span>
@@ -93,8 +85,6 @@ const Dashboard = () => {
               <span className="text-ocean-muted text-sm ml-2">BTC</span>
             </div>
           </div>
-
-          {/* Price */}
           <div className="mb-1">
             <span className={`text-foreground text-5xl font-bold transition-colors duration-300 ${flashing ? "animate-price-flash" : ""}`}>
               ${formatPrice(price)}
@@ -105,11 +95,7 @@ const Dashboard = () => {
             <span className="text-success text-sm font-medium">+2.4%</span>
             <span className="text-ocean-muted text-xs ml-1">24h</span>
           </div>
-
-          {/* Divider */}
           <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-          {/* Buzz Score */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-ocean-muted text-xs">Buzz Score</span>
@@ -120,38 +106,29 @@ const Dashboard = () => {
             </div>
             <p className="text-ocean-muted text-[11px] mt-1.5">Alta atividade nas redes</p>
           </div>
-
-          {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handlePress("up")}
               className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-success bg-[hsl(160,53%,12%)] hover:bg-success hover:text-ocean-dark ${pressedBtn === "up" ? "animate-press" : ""}`}
             >
-              <ArrowUp size={20} className="text-success group-hover:text-ocean-dark" />
-              SOBE
+              <ArrowUp size={20} className="text-success" /> SOBE
             </button>
             <button
               onClick={() => handlePress("down")}
               className={`h-16 rounded-[12px] font-bold text-foreground flex items-center justify-center gap-2 transition-all duration-200 border-2 border-danger bg-[hsl(355,53%,15%)] hover:bg-danger hover:text-ocean-dark ${pressedBtn === "down" ? "animate-press" : ""}`}
             >
-              <ArrowDown size={20} className="text-danger group-hover:text-ocean-dark" />
-              CAI
+              <ArrowDown size={20} className="text-danger" /> CAI
             </button>
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="w-full max-w-lg grid grid-cols-3 gap-3">
           {[
             { label: "Acertos hoje", value: "2/3" },
             { label: "Taxa de acerto", value: "68%" },
             { label: "Ranking", value: "#142" },
           ].map((s) => (
-            <div
-              key={s.label}
-              className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-1"
-              style={{ border: "1px solid rgba(92,200,232,0.15)" }}
-            >
+            <div key={s.label} className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-1" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
               <span className="text-ocean-muted text-[10px] sm:text-xs text-center">{s.label}</span>
               <span className="text-foreground font-bold text-base sm:text-lg">{s.value}</span>
             </div>
@@ -159,28 +136,12 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Chest FAB */}
-      <button className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-card-surface flex items-center justify-center shadow-lg" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
+      <button className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-card-surface flex items-center justify-center shadow-lg z-10" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
         <Package size={24} className="text-pacific" />
         <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-danger text-foreground text-[10px] font-bold flex items-center justify-center">1</span>
       </button>
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-nav-bg flex items-center justify-around py-3" style={{ borderTop: "1px solid rgba(92,200,232,0.1)" }}>
-        {[
-          { icon: Home, label: "Home", active: true },
-          { icon: Trophy, label: "Troféus", active: false },
-          { icon: BarChart3, label: "Ranking", active: false },
-          { icon: User, label: "Perfil", active: false },
-        ].map((item) => (
-          <button key={item.label} className="flex flex-col items-center gap-1">
-            <item.icon size={22} className={item.active ? "text-pacific" : "text-ocean-muted"} />
-            <span className={`text-[10px] ${item.active ? "text-pacific font-medium" : "text-ocean-muted"}`}>
-              {item.label}
-            </span>
-          </button>
-        ))}
-      </nav>
+      <BottomNav />
     </div>
   );
 };
