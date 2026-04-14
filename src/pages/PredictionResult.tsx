@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown } from "lucide-react";
+import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown, Target, ArrowRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface ClassicResultState {
@@ -21,7 +21,18 @@ interface BattleResultState {
   [key: string]: unknown;
 }
 
-type ResultState = ClassicResultState | BattleResultState;
+interface PrecisionResultState {
+  modo: "precisao";
+  faixaEscolhida: string;
+  faixaReal: string;
+  variacaoReal: string;
+  acertou: boolean;
+  retorno: number;
+  precoInicial: number;
+  precoFinal: number;
+}
+
+type ResultState = ClassicResultState | BattleResultState | PrecisionResultState;
 
 const STREAK = 5;
 
@@ -88,7 +99,12 @@ const PredictionResult = () => {
   const state = location.state as ResultState | null;
 
   const isBattle = state?.modo === "batalha";
+  const isPrecision = state?.modo === "precisao";
   const acertou = state?.acertou ?? true;
+
+  if (isPrecision) {
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} />;
+  }
 
   if (isBattle) {
     return <BattleResult state={state as BattleResultState} navigate={navigate} />;
@@ -293,6 +309,123 @@ const BattleResult = ({ state, navigate }: { state: BattleResultState; navigate:
             );
           })}
         </div>
+
+        <div className="text-center mb-5">
+          <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
+          <p className="text-ocean-muted text-xs mt-1">troféus</p>
+        </div>
+
+        <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
+
+        <a
+          href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
+          target="_blank" rel="noopener noreferrer"
+          className="w-full h-12 rounded-[12px] flex items-center justify-center gap-2 text-foreground font-medium text-sm transition-all duration-200 hover:opacity-80 mb-3"
+          style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.2)" }}
+        >
+          <XIcon /> Postar no X e ganhar +30 troféus
+        </a>
+
+        <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
+          <BarChart3 size={16} /> Ver leaderboard
+        </button>
+
+        <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
+          <RotateCcw size={16} /> Jogar novamente
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ========== Precision Result ==========
+
+const RANGE_LABELS: Record<string, string> = {
+  "0-0.1": "< 0.1%",
+  "0.1-0.5": "0.1% – 0.5%",
+  "0.5-2": "0.5% – 2%",
+  "2+": "> 2%",
+};
+
+const PrecisionResult = ({ state, navigate }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate> }) => {
+  const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
+  const trophies = acertou ? retorno : 15;
+  const borderColor = acertou ? "border-success" : "border-danger";
+  const particleColor = acertou ? "hsl(160,74%,42%)" : "hsl(355,79%,59%)";
+
+  const formatP = (p: number) => p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const tweetText = encodeURIComponent(
+    acertou
+      ? `🎯 Precisão perfeita no Pacifica Pulse! Variação de ${variacaoReal}% — dentro da faixa ${RANGE_LABELS[faixaEscolhida]}!\n\n+${retorno} troféus 🏆\n\nTente também 👇`
+      : `📊 Quase lá no modo Precisão! Variação de ${variacaoReal}%\n\nTente também 👇`
+  );
+  const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
+
+  return (
+    <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      <Particles color={particleColor} />
+
+      <div className={`relative z-10 w-full max-w-md rounded-[16px] bg-card-surface p-6 sm:p-8 animate-result-enter border-2 ${borderColor}`}>
+        <div className="flex justify-center mb-4">
+          {acertou ? (
+            <div className="w-16 h-16 rounded-full bg-success flex items-center justify-center">
+              <Target size={32} className="text-ocean-dark" strokeWidth={2} />
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-danger flex items-center justify-center">
+              <Target size={32} className="text-ocean-dark" strokeWidth={2} />
+            </div>
+          )}
+        </div>
+
+        <h1 className="text-foreground text-[28px] font-bold text-center mb-1">
+          {acertou ? "Precisão perfeita!" : "Quase lá..."}
+        </h1>
+        <p className="text-ocean-muted text-center text-sm mb-6">
+          {acertou
+            ? `A variação foi ${variacaoReal}% — dentro da sua faixa!`
+            : `A variação foi ${variacaoReal}% — fora da sua faixa`}
+        </p>
+
+        {/* Price comparison card */}
+        <div className="rounded-[12px] bg-ocean-dark p-4 mb-5" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-center flex-1">
+              <span className="text-ocean-muted text-[10px] block mb-1">Preço inicial</span>
+              <span className="text-foreground text-sm font-bold">${formatP(precoInicial)}</span>
+            </div>
+            <ArrowRight size={16} className={acertou ? "text-success shrink-0" : "text-danger shrink-0"} />
+            <div className="text-center flex-1">
+              <span className="text-ocean-muted text-[10px] block mb-1">Preço final</span>
+              <span className="text-foreground text-sm font-bold">${formatP(precoFinal)}</span>
+            </div>
+            <ArrowRight size={16} className={acertou ? "text-success shrink-0" : "text-danger shrink-0"} />
+            <div className="text-center flex-1">
+              <span className="text-ocean-muted text-[10px] block mb-1">Variação</span>
+              <span className={`text-sm font-bold ${acertou ? "text-success" : "text-danger"}`}>
+                {precoFinal >= precoInicial ? "+" : "-"}{variacaoReal}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Range badge */}
+        <div className={`rounded-[10px] p-3 mb-2 flex items-center justify-between ${acertou ? "border-2 border-success bg-success/10" : "border-2 border-danger bg-danger/10"}`}>
+          <span className="text-foreground text-sm font-medium">
+            Sua aposta: {RANGE_LABELS[faixaEscolhida] ?? faixaEscolhida}
+          </span>
+          <span className={`font-bold text-sm ${acertou ? "text-success" : "text-danger"}`}>
+            {acertou ? "✓" : "✗"}
+          </span>
+        </div>
+
+        {!acertou && faixaReal && (
+          <p className="text-ocean-muted text-xs text-center mb-4">
+            A variação real ficou em: {RANGE_LABELS[faixaReal] ?? faixaReal}
+          </p>
+        )}
+        {acertou && <div className="mb-4" />}
 
         <div className="text-center mb-5">
           <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
