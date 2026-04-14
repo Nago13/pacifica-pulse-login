@@ -101,14 +101,29 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="mb-1">
-            <span className={`text-foreground text-5xl font-bold transition-colors duration-300 ${flashing ? "animate-price-flash" : ""}`}>
-              ${formatPrice(price)}
-            </span>
+            {price === null ? (
+              <div className="h-14 w-72 rounded-lg bg-ocean-dark animate-pulse" />
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className={`text-foreground text-5xl font-bold transition-colors duration-300 ${flashing ? "animate-price-flash" : ""}`}>
+                  ${formatPrice(price)}
+                </span>
+                {apiError && <span className="w-2 h-2 rounded-full bg-danger shrink-0" title="Sem atualização" />}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1 mb-5">
-            <ArrowUp size={14} className="text-success" />
-            <span className="text-success text-sm font-medium">+2.4%</span>
-            <span className="text-ocean-muted text-xs ml-1">24h</span>
+            {change24h === null ? (
+              <div className="h-4 w-20 rounded bg-ocean-dark animate-pulse" />
+            ) : (
+              <>
+                {change24h >= 0 ? <ArrowUp size={14} className="text-success" /> : <ArrowDown size={14} className="text-danger" />}
+                <span className={`text-sm font-medium ${change24h >= 0 ? "text-success" : "text-danger"}`}>
+                  {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}%
+                </span>
+                <span className="text-ocean-muted text-xs ml-1">24h</span>
+              </>
+            )}
           </div>
           <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
           <div className="mb-6">
