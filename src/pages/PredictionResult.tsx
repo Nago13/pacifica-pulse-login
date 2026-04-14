@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown, Target, ArrowRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import ethereumLogo from "@/assets/ethereum-logo.png";
+import solanaLogo from "@/assets/solana-logo.png";
 
 interface ClassicResultState {
   acertou: boolean;
@@ -89,10 +92,10 @@ const XIcon = () => (
   </svg>
 );
 
-const COIN_META: Record<string, { name: string; symbol: string; symbolBg: string; symbolColor: string }> = {
-  BTC: { name: "Bitcoin", symbol: "₿", symbolBg: "bg-warning/20", symbolColor: "text-warning" },
-  ETH: { name: "Ethereum", symbol: "Ξ", symbolBg: "bg-[hsl(260,60%,25%)]", symbolColor: "text-[hsl(260,80%,70%)]" },
-  SOL: { name: "Solana", symbol: "◎", symbolBg: "bg-[hsl(280,50%,20%)]", symbolColor: "text-[hsl(170,80%,60%)]" },
+const COIN_META: Record<string, { name: string; logo: string }> = {
+  BTC: { name: "Bitcoin", logo: bitcoinLogo },
+  ETH: { name: "Ethereum", logo: ethereumLogo },
+  SOL: { name: "Solana", logo: solanaLogo },
 };
 
 const MODE_LABELS: Record<string, string> = { classico: "Clássico", batalha: "Batalha", precisao: "Precisão" };
@@ -441,9 +444,7 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
                   isWinner ? "border-2 border-success bg-success/10" : "border border-[rgba(92,200,232,0.08)]"
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full ${meta.symbolBg} flex items-center justify-center shrink-0`}>
-                  <span className={`${meta.symbolColor} font-bold text-sm`}>{meta.symbol}</span>
-                </div>
+                <img src={meta.logo} alt={meta.name} className="w-8 h-8 rounded-full shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-foreground text-sm font-bold">{meta.name}</span>
