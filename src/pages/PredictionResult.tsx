@@ -1,11 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const acertou = true;
+interface ResultState {
+  acertou: boolean;
+  variacao: string;
+  ativo: string;
+  direcao: "up" | "down";
+  precoInicial: number;
+  precoFinal: number;
+}
 
-const TROPHY_TARGET = acertou ? 25 : 15;
-const MULTIPLIER_TOTAL = acertou ? 37 : 15;
+const STREAK = 5; // mock streak
 
 const Particles = ({ color }: { color: string }) => {
   const particles = useMemo(
@@ -20,7 +26,7 @@ const Particles = ({ color }: { color: string }) => {
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0" style={{ animationDelay: "0.3s" }}>
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {particles.map((p) => (
         <div
           key={p.id}
@@ -36,7 +42,7 @@ const Particles = ({ color }: { color: string }) => {
   );
 };
 
-const CountUp = ({ target, className }: { target: number; className: string }) => {
+const CountUp = ({ target, prefix, className }: { target: number; prefix: string; className: string }) => {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const steps = 30;
@@ -49,7 +55,7 @@ const CountUp = ({ target, className }: { target: number; className: string }) =
     }, 1000 / steps);
     return () => clearInterval(timer);
   }, [target]);
-  return <span className={className}>{acertou ? `+${count}` : `−${count}`}</span>;
+  return <span className={className}>{prefix}{count}</span>;
 };
 
 const XIcon = () => (
@@ -60,12 +66,30 @@ const XIcon = () => (
 
 const PredictionResult = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as ResultState | null;
+
+  // Fallback if navigated directly
+  const acertou = state?.acertou ?? true;
+  const variacao = state?.variacao ?? "0.00";
+  const ativo = state?.ativo ?? "BTC";
+  const direcao = state?.direcao ?? "up";
+
+  const baseTrophies = acertou ? 25 : 15;
+  const hasMultiplier = acertou && STREAK > 3;
+  const finalTrophies = hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies;
+
+  const dirLabel = direcao === "up" ? "subiu" : "caiu";
+  const actualMovement = state
+    ? (state.precoFinal >= state.precoInicial ? "subiu" : "caiu")
+    : dirLabel;
+
   const borderColor = acertou ? "border-success" : "border-danger";
   const particleColor = acertou ? "hsl(160,74%,42%)" : "hsl(355,79%,59%)";
 
   const tweetText = encodeURIComponent(
     acertou
-      ? `🏆 Acertei minha previsão no Pacifica Pulse! BTC subiu 2.4% 📈\n\n🔥 Streak: 5 dias | Liga Ouro | 68% de acerto\n\nTente também 👇`
+      ? `🏆 Acertei minha previsão no Pacifica Pulse! ${ativo} ${actualMovement} ${variacao}% 📈\n\n🔥 Streak: ${STREAK} dias | Liga Ouro | 68% de acerto\n\nTente também 👇`
       : `📊 Errei dessa vez no Pacifica Pulse, mas sigo firme!\n\nTente também 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
@@ -91,22 +115,34 @@ const PredictionResult = () => {
           {acertou ? "Acertou!" : "Errou dessa vez"}
         </h1>
         <p className="text-ocean-muted text-center text-sm mb-6">
-          {acertou ? "BTC subiu 2.4% em 1 hora" : "BTC caiu 1.1% em 1 hora"}
+          {ativo} {actualMovement} {variacao}% em 1 minuto
         </p>
 
         <div className="text-center mb-5">
-          <CountUp target={acertou ? MULTIPLIER_TOTAL : TROPHY_TARGET} className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
+          <CountUp
+            target={finalTrophies}
+            prefix={acertou ? "+" : "−"}
+            className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`}
+          />
           <p className="text-ocean-muted text-xs mt-1">troféus</p>
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-2">
           <Flame size={18} className={acertou ? "text-warning" : "text-ocean-muted"} />
-          <span className="text-foreground text-sm font-medium">{acertou ? "Streak: 5 dias" : "Streak zerado"}</span>
-          {acertou && <span className="px-2 py-0.5 rounded-full bg-warning text-ocean-dark text-[10px] font-bold">Novo recorde!</span>}
+          <span className="text-foreground text-sm font-medium">
+            {acertou ? `Streak: ${STREAK} dias` : "Streak zerado"}
+          </span>
+          {acertou && STREAK >= 5 && (
+            <span className="px-2 py-0.5 rounded-full bg-warning text-ocean-dark text-[10px] font-bold">Novo recorde!</span>
+          )}
         </div>
 
-        {acertou && <p className="text-success text-xs text-center mb-6">Multiplicador 1.5× aplicado → +37 troféus</p>}
-        {!acertou && <div className="mb-6" />}
+        {hasMultiplier && (
+          <p className="text-success text-xs text-center mb-6">
+            Multiplicador 1.5× aplicado → +{finalTrophies} troféus
+          </p>
+        )}
+        {(!acertou || !hasMultiplier) && <div className="mb-6" />}
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
@@ -116,7 +152,9 @@ const PredictionResult = () => {
             <span className="text-foreground text-xs font-bold">Liga Ouro</span>
             <span className="text-ocean-muted text-[10px] ml-auto">847 troféus</span>
           </div>
-          <p className="text-foreground text-sm font-medium mb-1">{acertou ? "✅ Acertei! BTC +2.4%" : "📊 Errei, mas sigo firme!"}</p>
+          <p className="text-foreground text-sm font-medium mb-1">
+            {acertou ? `✅ Acertei! ${ativo} ${variacao}%` : `📊 Errei, mas sigo firme!`}
+          </p>
           <p className="text-ocean-muted text-[10px]">Taxa de acerto: 68%</p>
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
