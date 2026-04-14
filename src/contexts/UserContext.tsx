@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
 export interface UserData {
@@ -26,6 +27,15 @@ export interface BattleChest {
   reward_value: number | null;
 }
 
+export interface ActivePrediction {
+  mode: string;
+  asset: string;
+  direction: string;
+  priceInitial: number;
+  startedAt: number;
+  durationSeconds: number;
+}
+
 interface UserContextValue {
   user: UserData | null;
   loading: boolean;
@@ -39,6 +49,9 @@ interface UserContextValue {
   countBattleChestsToday: (mode: string) => Promise<number>;
   pendingBattleChestCount: number;
   refreshPendingChests: () => Promise<void>;
+  activePrediction: ActivePrediction | null;
+  setActivePrediction: (p: ActivePrediction | null) => void;
+  timeRemaining: number;
 }
 
 interface PredictionInput {
@@ -87,11 +100,157 @@ const BATTLE_REWARDS: Record<string, ChestReward[]> = {
   ],
 };
 
+const ACTIVE_PREDICTION_KEY = "activePrediction";
+
 export function UserProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingBattleChestCount, setPendingBattleChestCount] = useState(0);
 
+  const [activePrediction, setActivePredictionState] = useState<ActivePrediction | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resolvingRef = useRef(false);
+
+  // Wrap setActivePrediction to also persist to localStorage
+  const setActivePrediction = useCallback((p: ActivePrediction | null) => {
+    setActivePredictionState(p);
+    if (p) {
+      localStorage.setItem(ACTIVE_PREDICTION_KEY, JSON.stringify(p));
+      const elapsed = (Date.now() - p.startedAt) / 1000;
+      setTimeRemaining(Math.max(0, Math.floor(p.durationSeconds - elapsed)));
+    } else {
+      localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+      setTimeRemaining(0);
+    }
+  }, []);
+
+  // Restore from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(ACTIVE_PREDICTION_KEY);
+    if (saved) {
+      try {
+        const prediction: ActivePrediction = JSON.parse(saved);
+        const elapsed = (Date.now() - prediction.startedAt) / 1000;
+        const remaining = prediction.durationSeconds - elapsed;
+        if (remaining > 0) {
+          setActivePredictionState(prediction);
+          setTimeRemaining(Math.floor(remaining));
+        } else {
+          localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+        }
+      } catch {
+        localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+      }
+    }
+  }, []);
+
+  // Timer countdown + auto-resolve
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (!activePrediction) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [activePrediction]);
+
+  // Auto-resolve when timer hits 0
+  useEffect(() => {
+    if (timeRemaining !== 0 || !activePrediction || resolvingRef.current) return;
+    resolvingRef.current = true;
+
+    const resolve = async () => {
+      try {
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+        );
+        const data = await res.json();
+        const precoFinal = data.bitcoin.usd;
+        const variacao = ((precoFinal - activePrediction.priceInitial) / activePrediction.priceInitial) * 100;
+        const acertou =
+          activePrediction.direction === "up" ? variacao > 0 : variacao < 0;
+        const trofeusGanhos = acertou ? 25 : -15;
+
+        // Save prediction
+        if (user && user.id !== "local") {
+          await supabase.from("predictions").insert({
+            user_id: user.id,
+            mode: activePrediction.mode,
+            asset: activePrediction.asset,
+            direction: activePrediction.direction,
+            price_initial: activePrediction.priceInitial,
+            price_final: precoFinal,
+            variation_real: Math.abs(variacao),
+            result: acertou,
+            trophies_delta: trofeusGanhos,
+          });
+
+          const newTrophies = Math.max(0, user.trophies + trofeusGanhos);
+          const newStreak = acertou ? user.streak + 1 : 0;
+          const newLeague = calcLeague(newTrophies);
+
+          await supabase
+            .from("users")
+            .update({
+              trophies: newTrophies,
+              streak: newStreak,
+              league: newLeague,
+              last_played: new Date().toISOString().split("T")[0],
+            })
+            .eq("id", user.id);
+
+          setUser((prev) =>
+            prev ? { ...prev, trophies: newTrophies, streak: newStreak, league: newLeague } : prev
+          );
+        }
+
+        setActivePredictionState(null);
+        localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+
+        navigate("/result", {
+          state: {
+            acertou,
+            variacao: Math.abs(variacao).toFixed(2),
+            ativo: activePrediction.asset,
+            direcao: activePrediction.direction,
+            precoInicial: activePrediction.priceInitial,
+            precoFinal,
+            streak: user?.streak ?? 0,
+          },
+        });
+      } catch (err) {
+        console.error("Auto-resolve prediction error:", err);
+        setActivePredictionState(null);
+        localStorage.removeItem(ACTIVE_PREDICTION_KEY);
+      } finally {
+        resolvingRef.current = false;
+      }
+    };
+
+    resolve();
+  }, [timeRemaining, activePrediction, user, navigate]);
+
+  // ── User fetch/create ──
   const fetchOrCreateUser = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -247,6 +406,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const refreshPendingChests = useCallback(async () => {
+    if (!user || user.id === "local") { setPendingBattleChestCount(0); return; }
+    try {
+      const hoje = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("chests")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("type", "battle")
+        .is("opened_at", null)
+        .gte("earned_at", hoje);
+      setPendingBattleChestCount(data?.length ?? 0);
+    } catch {
+      setPendingBattleChestCount(0);
+    }
+  }, [user]);
+
   const earnBattleChest = useCallback(async (mode: string): Promise<boolean> => {
     if (!user || user.id === "local") return false;
     try {
@@ -268,7 +444,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.error("Earn battle chest error:", err);
       return false;
     }
-  }, [user]);
+  }, [user, countBattleChestsToday, refreshPendingChests]);
 
   const getBattleChests = useCallback(async (): Promise<BattleChest[]> => {
     if (!user || user.id === "local") return [];
@@ -311,24 +487,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.error("Open battle chest error:", err);
       return null;
     }
-  }, [user]);
-
-  const refreshPendingChests = useCallback(async () => {
-    if (!user || user.id === "local") { setPendingBattleChestCount(0); return; }
-    try {
-      const hoje = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
-        .from("chests")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("type", "battle")
-        .is("opened_at", null)
-        .gte("earned_at", hoje);
-      setPendingBattleChestCount(data?.length ?? 0);
-    } catch {
-      setPendingBattleChestCount(0);
-    }
-  }, [user]);
+  }, [user, refreshPendingChests]);
 
   useEffect(() => {
     if (user && user.id !== "local") refreshPendingChests();
@@ -340,6 +499,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       checkChest, openChest,
       earnBattleChest, getBattleChests, openBattleChest, countBattleChestsToday,
       pendingBattleChestCount, refreshPendingChests,
+      activePrediction, setActivePrediction, timeRemaining,
     }}>
       {children}
     </UserContext.Provider>

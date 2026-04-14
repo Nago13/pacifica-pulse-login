@@ -41,7 +41,7 @@ const leagueBadgeColors: Record<string, string> = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, checkChest, openChest } = useUser();
+  const { user, checkChest, openChest, activePrediction, setActivePrediction, timeRemaining } = useUser();
   const [coins, setCoins] = useState<CoinPrices>({ bitcoin: null, ethereum: null, solana: null });
   const [flashing, setFlashing] = useState(false);
   const [apiError, setApiError] = useState(false);
@@ -51,12 +51,11 @@ const Dashboard = () => {
   const [chestReward, setChestReward] = useState<{ tipo: string; valor: number } | null>(null);
   const [showChestModal, setShowChestModal] = useState(false);
 
-  // Classic prediction state
-  const [predictionActive, setPredictionActive] = useState(false);
-  const [predictionDir, setPredictionDir] = useState<"up" | "down" | null>(null);
-  const [predictionPrice, setPredictionPrice] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState(0);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Classic prediction now uses global context (activePrediction)
+  const predictionActive = activePrediction !== null && activePrediction.mode === "classico";
+  const predictionDir = activePrediction?.direction as "up" | "down" | null ?? null;
+  const predictionPrice = activePrediction?.priceInitial ?? null;
+  const countdown = predictionActive ? timeRemaining : 0;
   const [gameMode, setGameMode] = useState<GameMode>("classic");
 
   // Stats state
@@ -172,43 +171,20 @@ const Dashboard = () => {
     }, 1000);
   };
 
-  // ── Classic ──
+  // ── Classic ── (now uses global context for persistence)
   const handlePress = (dir: "up" | "down") => {
     if (predictionActive || price === null) return;
-    setPredictionDir(dir);
-    setPredictionPrice(price);
-    setPredictionActive(true);
-    setCountdown(COUNTDOWN_SECONDS);
-    startCountdown(countdownRef, setCountdown);
+    setActivePrediction({
+      mode: "classico",
+      asset: "BTC",
+      direction: dir,
+      priceInitial: price,
+      startedAt: Date.now(),
+      durationSeconds: COUNTDOWN_SECONDS,
+    });
   };
 
-  useEffect(() => {
-    if (countdown === 0 && predictionActive && predictionPrice !== null && predictionDir) {
-      const resolve = async () => {
-        const result = await fetchPrices();
-        const finalPrice = result?.bitcoin?.price ?? price;
-        if (finalPrice === null) return;
-        const variacao = ((finalPrice - predictionPrice) / predictionPrice) * 100;
-        const priceWentUp = finalPrice > predictionPrice;
-        const acertou = (predictionDir === "up" && priceWentUp) || (predictionDir === "down" && !priceWentUp);
-        setPredictionActive(false);
-        setPredictionDir(null);
-        setPredictionPrice(null);
-        navigate("/result", {
-          state: {
-            acertou,
-            variacao: Math.abs(variacao).toFixed(2),
-            ativo: "BTC",
-            direcao: predictionDir,
-            precoInicial: predictionPrice,
-            precoFinal: finalPrice,
-            streak: user?.streak ?? 0,
-          },
-        });
-      };
-      resolve();
-    }
-  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price, user]);
+  // Classic resolution is handled by UserContext auto-resolve
 
   // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
@@ -308,10 +284,9 @@ const Dashboard = () => {
     }
   }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price, user]);
 
-  // Cleanup
+  // Cleanup (battle/precision only — classic uses context)
   useEffect(() => {
     return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
       if (battleCountdownRef.current) clearInterval(battleCountdownRef.current);
       if (precisionCountdownRef.current) clearInterval(precisionCountdownRef.current);
     };
@@ -347,6 +322,32 @@ const Dashboard = () => {
 
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
         <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyActive} />
+
+        {/* Active prediction card — visible across all modes */}
+        {predictionActive && (
+          <div
+            className="w-full max-w-lg rounded-[16px] p-4 flex items-center gap-3"
+            style={{
+              backgroundColor: "hsl(var(--ocean-button))",
+              border: "1px solid hsl(var(--pacific))",
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
+              <span className="text-warning font-bold text-lg">₿</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-foreground text-sm font-bold">
+                Palpite em andamento — {predictionDir === "up" ? "SOBE ↑" : "CAI ↓"}
+              </p>
+              <p className="text-ocean-muted text-xs">
+                Aguardando resultado...
+              </p>
+            </div>
+            <span className={`font-bold text-lg tabular-nums shrink-0 ${countdown < 10 ? "text-danger" : "text-pacific"}`}>
+              {formatTimer(countdown)}
+            </span>
+          </div>
+        )}
 
         {gameMode === "classic" ? (
           <>
