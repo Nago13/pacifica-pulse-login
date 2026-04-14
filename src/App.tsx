@@ -10,6 +10,7 @@ import PredictionResult from "./pages/PredictionResult.tsx";
 import Profile from "./pages/Profile.tsx";
 import Leaderboard from "./pages/Leaderboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Chests from "./pages/Chests.tsx";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/result" element={<PredictionResult />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/chests" element={<Chests />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </UserProvider>

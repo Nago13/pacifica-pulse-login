@@ -1,0 +1,215 @@
+import { useState, useEffect, useCallback } from "react";
+import { Package, Lock, Gift, Clock } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+import { useUser, type BattleChest } from "@/contexts/UserContext";
+
+const MODES = [
+  { key: "classico", label: "Clássico" },
+  { key: "batalha", label: "Batalha" },
+  { key: "precisao", label: "Precisão" },
+];
+
+const cardBorder = "1px solid rgba(92,200,232,0.15)";
+
+const Chests = () => {
+  const { user, checkChest, openChest, getBattleChests, openBattleChest, refreshPendingChests } = useUser();
+  const [dailyAvailable, setDailyAvailable] = useState(false);
+  const [dailyCountdown, setDailyCountdown] = useState("");
+  const [battleChests, setBattleChests] = useState<BattleChest[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalReward, setModalReward] = useState<{ tipo: string; valor: number; label?: string } | null>(null);
+  const [openingChest, setOpeningChest] = useState(false);
+  const [animPhase, setAnimPhase] = useState<"closed" | "opening" | "reward">("closed");
+
+  const loadData = useCallback(async () => {
+    const [available, chests] = await Promise.all([
+      checkChest(),
+      getBattleChests(),
+    ]);
+    setDailyAvailable(available);
+    setBattleChests(chests);
+  }, [checkChest, getBattleChests]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Daily countdown
+  useEffect(() => {
+    if (dailyAvailable) { setDailyCountdown(""); return; }
+    const update = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight.getTime() - now.getTime();
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      setDailyCountdown(`${h}h ${m}min`);
+    };
+    update();
+    const iv = setInterval(update, 60000);
+    return () => clearInterval(iv);
+  }, [dailyAvailable]);
+
+  const handleOpenDaily = async () => {
+    if (openingChest) return;
+    setOpeningChest(true);
+    const reward = await openChest();
+    if (reward) {
+      setModalReward(reward);
+      setAnimPhase("closed");
+      setShowModal(true);
+      setTimeout(() => setAnimPhase("opening"), 500);
+      setTimeout(() => setAnimPhase("reward"), 800);
+    }
+    setDailyAvailable(false);
+    setOpeningChest(false);
+  };
+
+  const handleOpenBattle = async (chest: BattleChest) => {
+    if (openingChest || chest.opened_at) return;
+    setOpeningChest(true);
+    const reward = await openBattleChest(chest.id, chest.mode);
+    if (reward) {
+      setModalReward(reward);
+      setAnimPhase("closed");
+      setShowModal(true);
+      setTimeout(() => setAnimPhase("opening"), 500);
+      setTimeout(() => setAnimPhase("reward"), 800);
+    }
+    await loadData();
+    setOpeningChest(false);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalReward(null);
+    setAnimPhase("closed");
+  };
+
+  const getModeCounts = (mode: string) => {
+    const modeChests = battleChests.filter(c => c.mode === mode);
+    const unopened = modeChests.filter(c => !c.opened_at);
+    return { total: modeChests.length, unopened };
+  };
+
+  const rewardLabel = (r: { tipo: string; valor: number; label?: string }) => {
+    if (r.label) return r.label;
+    if (r.tipo === "moedas") return `+${r.valor} troféus!`;
+    if (r.tipo === "trofeus") return `+${r.valor} troféus bônus!`;
+    if (r.tipo === "escudo") return `${r.valor} escudo protetor!`;
+    if (r.tipo === "xp_boost") return `${r.valor}× XP Boost!`;
+    if (r.tipo === "raro") return "Drop raro!";
+    return `${r.tipo}: ${r.valor}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col">
+      <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
+        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5">
+          <h1 className="text-foreground text-[22px] font-bold">Meus Baús</h1>
+
+          {/* Daily Chest */}
+          <div className="rounded-[16px] bg-card-surface p-5" style={{ border: cardBorder }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-[12px] bg-success/20 flex items-center justify-center">
+                <Gift size={24} className="text-success" />
+              </div>
+              <div className="flex-1">
+                <span className="text-foreground font-bold text-sm">Baú Diário</span>
+                {dailyAvailable ? (
+                  <p className="text-success text-xs font-medium">Disponível!</p>
+                ) : (
+                  <p className="text-ocean-muted text-xs flex items-center gap-1">
+                    <Clock size={10} /> Abre em {dailyCountdown}
+                  </p>
+                )}
+              </div>
+              {dailyAvailable && (
+                <button
+                  onClick={handleOpenDaily}
+                  disabled={openingChest}
+                  className="px-4 py-2 rounded-[10px] bg-success text-ocean-dark font-bold text-sm transition-all hover:opacity-80"
+                >
+                  Abrir
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Battle Chests by Mode */}
+          <div className="flex flex-col gap-4">
+            {MODES.map(({ key, label }) => {
+              const { total, unopened } = getModeCounts(key);
+              const modeChests = battleChests.filter(c => c.mode === key);
+
+              return (
+                <div key={key} className="rounded-[16px] bg-card-surface p-4" style={{ border: cardBorder }}>
+                  <span className="text-foreground font-bold text-sm mb-3 block">{label}</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const chest = modeChests.filter(c => !c.opened_at)[i];
+                      const hasChest = !!chest;
+
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => hasChest && handleOpenBattle(chest)}
+                          disabled={!hasChest || openingChest}
+                          className={`w-11 h-11 rounded-[8px] flex items-center justify-center transition-all ${
+                            hasChest
+                              ? "bg-[hsl(200,50%,20%)] border-2 border-pacific cursor-pointer hover:scale-105 active:scale-95"
+                              : "bg-card-surface border border-[rgba(255,255,255,0.1)] cursor-default"
+                          }`}
+                        >
+                          {hasChest ? (
+                            <Package size={18} className="text-pacific animate-pulse" />
+                          ) : (
+                            <Lock size={14} className="text-ocean-muted/50" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-ocean-muted text-[11px]">{total}/5 baús hoje</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </main>
+
+      {/* Chest Open Modal */}
+      {showModal && modalReward && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4" onClick={closeModal}>
+          <div
+            className="bg-card-surface rounded-[16px] p-6 w-full max-w-sm text-center animate-result-enter"
+            style={{ border: "1px solid rgba(92,200,232,0.3)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`mx-auto mb-4 transition-transform duration-300 ${
+              animPhase === "opening" ? "scale-[1.2]" : "scale-100"
+            }`}>
+              <Package size={48} className={animPhase === "reward" ? "text-warning" : "text-pacific"} />
+            </div>
+
+            {animPhase === "reward" ? (
+              <div className="animate-fade-in">
+                <h2 className="text-foreground text-xl font-bold mb-2">Recompensa!</h2>
+                <p className="text-pacific text-lg font-bold mb-4">{rewardLabel(modalReward)}</p>
+              </div>
+            ) : (
+              <h2 className="text-foreground text-xl font-bold mb-2">Abrindo baú...</h2>
+            )}
+
+            <button onClick={closeModal} className="w-full h-11 rounded-[12px] bg-pacific text-ocean-dark font-bold text-sm mt-2">
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <BottomNav />
+    </div>
+  );
+};
+
+export default Chests;
