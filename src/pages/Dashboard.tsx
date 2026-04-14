@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2 } from "lucide-react";
+import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
+import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
 
 const API_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true";
 const COUNTDOWN_SECONDS = 60;
