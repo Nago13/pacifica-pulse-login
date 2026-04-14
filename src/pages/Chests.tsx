@@ -87,8 +87,9 @@ const Chests = () => {
 
   const getModeCounts = (mode: string) => {
     const modeChests = battleChests.filter(c => c.mode === mode);
+    const opened = modeChests.filter(c => !!c.opened_at);
     const unopened = modeChests.filter(c => !c.opened_at);
-    return { total: modeChests.length, unopened };
+    return { opened, unopened };
   };
 
   const rewardLabel = (r: { tipo: string; valor: number; label?: string }) => {
