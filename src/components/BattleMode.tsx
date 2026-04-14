@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2, Check, ArrowLeft } from "lucide-react";
 import type { CoinPrices } from "@/pages/Dashboard";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import ethereumLogo from "@/assets/ethereum-logo.png";
+import solanaLogo from "@/assets/solana-logo.png";
 
 interface BattleModeProps {
   coins: CoinPrices;
@@ -16,25 +19,19 @@ const COIN_LIST = [
     id: "bitcoin",
     ticker: "BTC",
     name: "Bitcoin",
-    symbol: "₿",
-    symbolBg: "bg-warning/20",
-    symbolColor: "text-warning",
+    logo: bitcoinLogo,
   },
   {
     id: "ethereum",
     ticker: "ETH",
     name: "Ethereum",
-    symbol: "Ξ",
-    symbolBg: "bg-[hsl(260,60%,25%)]",
-    symbolColor: "text-[hsl(260,80%,70%)]",
+    logo: ethereumLogo,
   },
   {
     id: "solana",
     ticker: "SOL",
     name: "Solana",
-    symbol: "◎",
-    symbolBg: "bg-[hsl(280,50%,20%)]",
-    symbolColor: "text-[hsl(170,80%,60%)]",
+    logo: solanaLogo,
   },
 ];
 
