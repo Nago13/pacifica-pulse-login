@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Package, Lock, Gift, Clock } from "lucide-react";
+import { Package, PackageOpen, Lock, Gift, Clock } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useUser, type BattleChest } from "@/contexts/UserContext";
 
