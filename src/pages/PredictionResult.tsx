@@ -337,13 +337,17 @@ const PredictionResult = () => {
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
+      </div>
     </div>
   );
 };
 
 // ========== Battle Result ==========
 
-const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
+type ChestProps = { acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate> };
+
+const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
+  const { acertou } = state;
   const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -452,15 +456,7 @@ const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFu
           <RotateCcw size={16} /> Jogar novamente
         </button>
 
-        {acertou && chestEarned && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-            <Package size={20} className="text-pacific animate-pulse" />
-            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-          </div>
-        )}
-        {acertou && chestSlotsFull && (
-          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-        )}
+        <ChestNotification {...chestProps} />
       </div>
     </div>
   );
@@ -475,7 +471,7 @@ const RANGE_LABELS: Record<string, string> = {
   "2+": "> 2%",
 };
 
-const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
+const PrecisionResult = ({ state, navigate, user, streak, chestProps }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
   const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
   const trophies = acertou ? retorno : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -577,15 +573,7 @@ const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlot
           <RotateCcw size={16} /> Jogar novamente
         </button>
 
-        {acertou && chestEarned && (
-          <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-[12px] bg-ocean-dark animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-            <Package size={20} className="text-pacific animate-pulse" />
-            <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-          </div>
-        )}
-        {acertou && chestSlotsFull && (
-          <p className="mt-3 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-        )}
+        <ChestNotification {...chestProps} />
       </div>
     </div>
   );
