@@ -226,12 +226,14 @@ const PredictionResult = () => {
     doSave();
   }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
 
+  const chestProps = { acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode: currentMode, navigate };
+
   if (isPrecision) {
-    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
   }
 
   if (isBattle) {
-    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
+    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
   }
 
   // Classic mode
@@ -315,6 +317,10 @@ const PredictionResult = () => {
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
 
+        <ChestNotification {...chestProps} />
+
+        {chestProps.acertou && <div className="mb-1" />}
+
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
           target="_blank" rel="noopener noreferrer"
@@ -331,17 +337,6 @@ const PredictionResult = () => {
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
-      </div>
-
-      {acertou && chestEarned && (
-        <div className="relative z-10 mt-4 flex items-center gap-3 px-5 py-3 rounded-[12px] bg-card-surface animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
-          <Package size={20} className="text-pacific animate-pulse" />
-          <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
-        </div>
-      )}
-      {acertou && chestSlotsFull && (
-        <p className="relative z-10 mt-4 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
-      )}
     </div>
   );
 };
