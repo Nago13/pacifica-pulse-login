@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Package, PackageOpen, Lock, Gift, Clock } from "lucide-react";
+import { Package, Lock, Gift, Clock } from "lucide-react";
+import chestOpenedImg from "@/assets/chest-opened.png";
 import BottomNav from "@/components/BottomNav";
 import { useUser, type BattleChest } from "@/contexts/UserContext";
 
