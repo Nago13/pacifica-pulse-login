@@ -41,7 +41,7 @@ const leagueBadgeColors: Record<string, string> = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, checkChest, openChest } = useUser();
+  const { user, checkChest, openChest, activePrediction, setActivePrediction, timeRemaining } = useUser();
   const [coins, setCoins] = useState<CoinPrices>({ bitcoin: null, ethereum: null, solana: null });
   const [flashing, setFlashing] = useState(false);
   const [apiError, setApiError] = useState(false);
