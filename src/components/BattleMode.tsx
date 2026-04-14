@@ -95,9 +95,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                     : "border border-[rgba(92,200,232,0.15)] bg-card-surface opacity-60"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                  <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                </div>
+                <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                 <div className="text-center">
                   <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                   <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
@@ -161,9 +159,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                     {isSelected && <Check size={12} className="text-ocean-dark" />}
                   </div>
 
-                  <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                    <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                  </div>
+                  <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                   <div className="text-center">
                     <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                     <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
@@ -222,9 +218,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                       : "border border-[rgba(92,200,232,0.15)] bg-card-surface hover:border-pacific/40"
                   } ${notSelected ? "opacity-60" : ""}`}
                 >
-                  <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                    <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                  </div>
+                  <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                   <div className="text-center">
                     <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                     <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
