@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Clock } from "lucide-react";
+import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
@@ -19,6 +19,13 @@ export type CoinPrices = {
   bitcoin: CoinData | null;
   ethereum: CoinData | null;
   solana: CoinData | null;
+};
+
+const RANGE_BOUNDS: Record<PrecisionRange, [number, number]> = {
+  "0-0.1": [0, 0.1],
+  "0.1-0.5": [0.1, 0.5],
+  "0.5-2": [0.5, 2],
+  "2+": [2, Infinity],
 };
 
 const Dashboard = () => {
@@ -41,6 +48,15 @@ const Dashboard = () => {
   const battleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [battleChoice, setBattleChoice] = useState<string | null>(null);
   const [battleStartPrices, setBattleStartPrices] = useState<CoinPrices | null>(null);
+  const [battleArenaCoins, setBattleArenaCoins] = useState<string[]>([]);
+
+  // Precision state
+  const [precisionActive, setPrecisionActive] = useState(false);
+  const [precisionCountdown, setPrecisionCountdown] = useState(0);
+  const precisionCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [precisionRange, setPrecisionRange] = useState<PrecisionRange | null>(null);
+  const [precisionPrice, setPrecisionPrice] = useState<number | null>(null);
+  const [precisionReward, setPrecisionReward] = useState(0);
 
   const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
     try {
@@ -66,10 +82,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(() => {
-      if (!predictionActive && !battleActive) fetchPrices();
+      if (!predictionActive && !battleActive && !precisionActive) fetchPrices();
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchPrices, predictionActive, battleActive]);
+  }, [fetchPrices, predictionActive, battleActive, precisionActive]);
 
   const formatTimer = useCallback((s: number) => {
     const m = Math.floor(s / 60);
@@ -80,7 +96,6 @@ const Dashboard = () => {
   const formatPrice = (p: number) =>
     p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // Derived BTC values for classic mode
   const price = coins.bitcoin?.price ?? null;
   const change24h = coins.bitcoin?.change24h ?? null;
 
@@ -96,6 +111,7 @@ const Dashboard = () => {
     }, 1000);
   };
 
+  // ── Classic ──
   const handlePress = (dir: "up" | "down") => {
     if (predictionActive || price === null) return;
     setPredictionDir(dir);
@@ -105,43 +121,27 @@ const Dashboard = () => {
     startCountdown(countdownRef, setCountdown);
   };
 
-  // Classic resolve
   useEffect(() => {
     if (countdown === 0 && predictionActive && predictionPrice !== null && predictionDir) {
       const resolve = async () => {
         const result = await fetchPrices();
         const finalPrice = result?.bitcoin?.price ?? price;
         if (finalPrice === null) return;
-
         const variacao = ((finalPrice - predictionPrice) / predictionPrice) * 100;
         const priceWentUp = finalPrice > predictionPrice;
-        const acertou =
-          (predictionDir === "up" && priceWentUp) ||
-          (predictionDir === "down" && !priceWentUp);
-
+        const acertou = (predictionDir === "up" && priceWentUp) || (predictionDir === "down" && !priceWentUp);
         setPredictionActive(false);
         setPredictionDir(null);
         setPredictionPrice(null);
-
         navigate("/result", {
-          state: {
-            acertou,
-            variacao: Math.abs(variacao).toFixed(2),
-            ativo: "BTC",
-            direcao: predictionDir,
-            precoInicial: predictionPrice,
-            precoFinal: finalPrice,
-          },
+          state: { acertou, variacao: Math.abs(variacao).toFixed(2), ativo: "BTC", direcao: predictionDir, precoInicial: predictionPrice, precoFinal: finalPrice },
         });
       };
       resolve();
     }
   }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price]);
 
-  // Battle state - arena coins
-  const [battleArenaCoins, setBattleArenaCoins] = useState<string[]>([]);
-
-  // Battle confirm
+  // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
     setBattleChoice(chosenCoin);
     setBattleArenaCoins(arenaCoins);
@@ -151,63 +151,103 @@ const Dashboard = () => {
     startCountdown(battleCountdownRef, setBattleCountdown);
   };
 
-  // Battle resolve
   useEffect(() => {
     if (battleCountdown === 0 && battleActive && battleStartPrices && battleChoice) {
       const resolve = async () => {
         const result = await fetchPrices();
         const finalCoins = result ?? coins;
-
         const tickerMap: Record<string, string> = { bitcoin: "BTC", ethereum: "ETH", solana: "SOL" };
-
         const calcVar = (coin: keyof CoinPrices) => {
           const start = battleStartPrices[coin]?.price;
           const end = finalCoins[coin]?.price;
           if (!start || !end) return 0;
           return ((end - start) / start) * 100;
         };
-
-        // Only compare arena coins
         const arenaVariations: Record<string, number> = {};
         for (const coinId of battleArenaCoins) {
-          const ticker = tickerMap[coinId] ?? coinId.toUpperCase();
-          arenaVariations[ticker] = calcVar(coinId as keyof CoinPrices);
+          arenaVariations[tickerMap[coinId] ?? coinId.toUpperCase()] = calcVar(coinId as keyof CoinPrices);
         }
-
         const moedaVencedora = Object.entries(arenaVariations).sort((a, b) => b[1] - a[1])[0][0];
         const chosenTicker = tickerMap[battleChoice] ?? "BTC";
-
         setBattleActive(false);
         setBattleChoice(null);
         setBattleStartPrices(null);
         setBattleArenaCoins([]);
-
         const stateData: Record<string, unknown> = {
-          modo: "batalha",
-          moedaEscolhida: chosenTicker,
-          moedaVencedora,
-          acertou: chosenTicker === moedaVencedora,
-          arenaCoins: Object.keys(arenaVariations),
+          modo: "batalha", moedaEscolhida: chosenTicker, moedaVencedora,
+          acertou: chosenTicker === moedaVencedora, arenaCoins: Object.keys(arenaVariations),
         };
         for (const [ticker, val] of Object.entries(arenaVariations)) {
           stateData[`variacao${ticker}`] = (val >= 0 ? "+" : "") + val.toFixed(2) + "%";
         }
-
         navigate("/result", { state: stateData });
       };
       resolve();
     }
-  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins]);
+  }, [battleCountdown, battleActive, battleStartPrices, battleChoice, fetchPrices, navigate, coins, battleArenaCoins]);
+
+  // ── Precision ──
+  const handlePrecisionConfirm = (range: PrecisionRange, reward: number) => {
+    if (price === null) return;
+    setPrecisionRange(range);
+    setPrecisionPrice(price);
+    setPrecisionReward(reward);
+    setPrecisionActive(true);
+    setPrecisionCountdown(COUNTDOWN_SECONDS);
+    startCountdown(precisionCountdownRef, setPrecisionCountdown);
+  };
+
+  useEffect(() => {
+    if (precisionCountdown === 0 && precisionActive && precisionPrice !== null && precisionRange) {
+      const resolve = async () => {
+        const result = await fetchPrices();
+        const finalPrice = result?.bitcoin?.price ?? price;
+        if (finalPrice === null) return;
+        const variacaoAbs = Math.abs(((finalPrice - precisionPrice) / precisionPrice) * 100);
+        const [min, max] = RANGE_BOUNDS[precisionRange];
+        const acertou = variacaoAbs >= min && variacaoAbs < max;
+
+        // Find actual range label
+        let faixaReal = "";
+        for (const [key, [lo, hi]] of Object.entries(RANGE_BOUNDS)) {
+          if (variacaoAbs >= lo && variacaoAbs < hi) { faixaReal = key; break; }
+        }
+
+        setPrecisionActive(false);
+        const savedRange = precisionRange;
+        const savedPrice = precisionPrice;
+        const savedReward = precisionReward;
+        setPrecisionRange(null);
+        setPrecisionPrice(null);
+        setPrecisionReward(0);
+
+        navigate("/result", {
+          state: {
+            modo: "precisao",
+            faixaEscolhida: savedRange,
+            faixaReal,
+            variacaoReal: variacaoAbs.toFixed(2),
+            acertou,
+            retorno: savedReward,
+            precoInicial: savedPrice,
+            precoFinal: finalPrice,
+          },
+        });
+      };
+      resolve();
+    }
+  }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price]);
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       if (battleCountdownRef.current) clearInterval(battleCountdownRef.current);
+      if (precisionCountdownRef.current) clearInterval(precisionCountdownRef.current);
     };
   }, []);
 
-  const anyActive = predictionActive || battleActive;
+  const anyActive = predictionActive || battleActive || precisionActive;
   const timerLow = countdown < 10 && countdown > 0;
 
   return (
@@ -342,13 +382,19 @@ const Dashboard = () => {
             formatTimer={formatTimer}
           />
         ) : (
-          <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-8 flex flex-col items-center justify-center gap-3" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
-            <Clock size={40} className="text-pacific opacity-50" />
-            <span className="text-foreground text-lg font-bold">Em breve...</span>
-            <span className="text-ocean-muted text-sm text-center">
-              O modo Precisão está sendo desenvolvido. Fique ligado!
-            </span>
-          </div>
+          <PrecisionMode
+            price={price}
+            change24h={change24h}
+            flashing={flashing}
+            apiError={apiError}
+            precisionActive={precisionActive}
+            precisionCountdown={precisionCountdown}
+            precisionRange={precisionRange}
+            precisionPrice={precisionPrice}
+            onConfirm={handlePrecisionConfirm}
+            formatTimer={formatTimer}
+            formatPrice={formatPrice}
+          />
         )}
       </main>
 
