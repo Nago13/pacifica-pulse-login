@@ -323,6 +323,32 @@ const Dashboard = () => {
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto">
         <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyActive} />
 
+        {/* Active prediction card — visible across all modes */}
+        {predictionActive && (
+          <div
+            className="w-full max-w-lg rounded-[16px] p-4 flex items-center gap-3"
+            style={{
+              backgroundColor: "hsl(var(--ocean-button))",
+              border: "1px solid hsl(var(--pacific))",
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
+              <span className="text-warning font-bold text-lg">₿</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-foreground text-sm font-bold">
+                Palpite em andamento — {predictionDir === "up" ? "SOBE ↑" : "CAI ↓"}
+              </p>
+              <p className="text-ocean-muted text-xs">
+                Aguardando resultado...
+              </p>
+            </div>
+            <span className={`font-bold text-lg tabular-nums shrink-0 ${countdown < 10 ? "text-danger" : "text-pacific"}`}>
+              {formatTimer(countdown)}
+            </span>
+          </div>
+        )}
+
         {gameMode === "classic" ? (
           <>
             <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
