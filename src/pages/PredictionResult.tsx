@@ -99,15 +99,17 @@ const PredictionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as ResultState | null;
-  const { user, savePrediction, refreshUser } = useUser();
+  const { user, savePrediction, refreshUser, earnBattleChest, countBattleChestsToday } = useUser();
   const savedRef = useRef(false);
+  const [chestEarned, setChestEarned] = useState(false);
+  const [chestSlotsFull, setChestSlotsFull] = useState(false);
 
   const isBattle = state?.modo === "batalha";
   const isPrecision = state?.modo === "precisao";
   const acertou = state?.acertou ?? true;
   const streak = (state as any)?.streak ?? user?.streak ?? 0;
 
-  // Save prediction to Supabase once
+  // Save prediction + earn battle chest
   useEffect(() => {
     if (!state || savedRef.current) return;
     savedRef.current = true;
@@ -146,17 +148,30 @@ const PredictionResult = () => {
       trophiesDelta = s.acertou ? (hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies) : -15;
     }
 
-    savePrediction({
-      mode,
-      asset,
-      direction,
-      price_initial: priceInitial,
-      price_final: priceFinal,
-      variation_real: variationReal,
-      result: acertou,
-      trophies_delta: trophiesDelta,
-    }).then(() => refreshUser());
-  }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak]);
+    const doSave = async () => {
+      await savePrediction({
+        mode, asset, direction,
+        price_initial: priceInitial,
+        price_final: priceFinal,
+        variation_real: variationReal,
+        result: acertou,
+        trophies_delta: trophiesDelta,
+      });
+      await refreshUser();
+
+      // Award battle chest if correct
+      if (acertou) {
+        const count = await countBattleChestsToday(mode);
+        if (count < 5) {
+          const earned = await earnBattleChest(mode);
+          setChestEarned(earned);
+        } else {
+          setChestSlotsFull(true);
+        }
+      }
+    };
+    doSave();
+  }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
 
   if (isPrecision) {
     return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} />;
