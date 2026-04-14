@@ -1,28 +1,43 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 
-const INITIAL_PRICE = 83420.5;
+const API_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [price, setPrice] = useState(INITIAL_PRICE);
+  const [price, setPrice] = useState<number | null>(null);
+  const [change24h, setChange24h] = useState<number | null>(null);
   const [flashing, setFlashing] = useState(false);
+  const [apiError, setApiError] = useState(false);
   const [timer, setTimer] = useState(3512);
   const [pressedBtn, setPressedBtn] = useState<"up" | "down" | null>(null);
+  const prevPrice = useRef<number | null>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPrice((p) => {
-        const change = (Math.random() - 0.48) * 200;
-        return Math.round((p + change) * 100) / 100;
-      });
+  const fetchPrice = useCallback(async () => {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      const newPrice = data.bitcoin.usd as number;
+      const newChange = data.bitcoin.usd_24h_change as number;
+      prevPrice.current = newPrice;
+      setPrice(newPrice);
+      setChange24h(newChange);
+      setApiError(false);
       setFlashing(true);
       setTimeout(() => setFlashing(false), 300);
-    }, 5000);
-    return () => clearInterval(interval);
+    } catch {
+      setApiError(true);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPrice();
+    const interval = setInterval(fetchPrice, 30000);
+    return () => clearInterval(interval);
+  }, [fetchPrice]);
 
   useEffect(() => {
     const interval = setInterval(() => {
