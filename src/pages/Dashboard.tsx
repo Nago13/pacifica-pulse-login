@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
@@ -83,6 +84,31 @@ const Dashboard = () => {
   useEffect(() => {
     checkChest().then(setChestAvailable);
   }, [checkChest]);
+
+  // Fetch stats (acertos hoje, taxa, ranking)
+  const fetchStats = useCallback(async () => {
+    if (!user || user.id === "local") return;
+    try {
+      const hoje = new Date().toISOString().split("T")[0];
+      const [todayRes, allRes, rankRes] = await Promise.all([
+        supabase.from("predictions").select("result").eq("user_id", user.id).gte("created_at", hoje),
+        supabase.from("predictions").select("result").eq("user_id", user.id),
+        supabase.from("users").select("id").gt("trophies", user.trophies),
+      ]);
+      const todayHits = todayRes.data?.filter((p: any) => p.result).length ?? 0;
+      setAcertosHoje(String(todayHits));
+      const total = allRes.data?.length ?? 0;
+      const hits = allRes.data?.filter((p: any) => p.result).length ?? 0;
+      setTaxaAcerto(total > 0 ? `${Math.round((hits / total) * 100)}%` : "0%");
+      setRanking(`#${(rankRes.data?.length ?? 0) + 1}`);
+    } catch {
+      // keep fallback "—"
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleOpenChest = async () => {
     const reward = await openChest();
@@ -410,9 +436,9 @@ const Dashboard = () => {
 
             <div className="w-full max-w-lg grid grid-cols-3 gap-3">
               {[
-                { label: "Acertos hoje", value: "—" },
-                { label: "Taxa de acerto", value: "—" },
-                { label: "Ranking", value: "—" },
+                { label: "Acertos hoje", value: acertosHoje },
+                { label: "Taxa de acerto", value: taxaAcerto },
+                { label: "Ranking", value: ranking },
               ].map((s) => (
                 <div key={s.label} className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-1" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
                   <span className="text-ocean-muted text-[10px] sm:text-xs text-center">{s.label}</span>
