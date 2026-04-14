@@ -51,13 +51,11 @@ const Dashboard = () => {
   const [chestReward, setChestReward] = useState<{ tipo: string; valor: number } | null>(null);
   const [showChestModal, setShowChestModal] = useState(false);
 
-  // Classic prediction state
-  const [predictionActive, setPredictionActive] = useState(false);
-  const [predictionDir, setPredictionDir] = useState<"up" | "down" | null>(null);
-  const [predictionPrice, setPredictionPrice] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState(0);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [gameMode, setGameMode] = useState<GameMode>("classic");
+  // Classic prediction now uses global context (activePrediction)
+  const predictionActive = activePrediction !== null && activePrediction.mode === "classico";
+  const predictionDir = activePrediction?.direction as "up" | "down" | null ?? null;
+  const predictionPrice = activePrediction?.priceInitial ?? null;
+  const countdown = predictionActive ? timeRemaining : 0;
 
   // Stats state
   const [acertosHoje, setAcertosHoje] = useState<string>("—");
