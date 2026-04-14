@@ -280,18 +280,22 @@ const PredictionResult = () => {
         </button>
       </div>
 
-      <button className="relative z-10 mt-6 flex items-center gap-2 px-5 py-3 rounded-[12px] bg-card-surface text-pacific font-medium text-sm animate-pulse-glow transition-all hover:opacity-90"
-        style={{ border: "1px solid rgba(92,200,232,0.3)" }}
-      >
-        <Package size={18} /> Abrir baú disponível
-      </button>
+      {acertou && chestEarned && (
+        <div className="relative z-10 mt-4 flex items-center gap-3 px-5 py-3 rounded-[12px] bg-card-surface animate-pulse-glow" style={{ border: "1px solid rgba(92,200,232,0.3)" }}>
+          <Package size={20} className="text-pacific animate-pulse" />
+          <span className="text-pacific font-medium text-sm">Baú de batalha ganho!</span>
+        </div>
+      )}
+      {acertou && chestSlotsFull && (
+        <p className="relative z-10 mt-4 text-ocean-muted text-xs text-center">Slots cheios hoje — volte amanhã</p>
+      )}
     </div>
   );
 };
 
 // ========== Battle Result ==========
 
-const BattleResult = ({ state, navigate, user, streak }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number }) => {
+const BattleResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
   const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -413,7 +417,7 @@ const RANGE_LABELS: Record<string, string> = {
   "2+": "> 2%",
 };
 
-const PrecisionResult = ({ state, navigate, user, streak }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number }) => {
+const PrecisionResult = ({ state, navigate, user, streak, chestEarned, chestSlotsFull }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestEarned: boolean; chestSlotsFull: boolean }) => {
   const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
   const trophies = acertou ? retorno : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
