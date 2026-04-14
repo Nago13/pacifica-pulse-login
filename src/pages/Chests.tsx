@@ -152,10 +152,10 @@ const Chests = () => {
                         return (
                           <div
                             key={i}
-                            className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default"
+                            className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default overflow-hidden"
                             style={{ background: "#0A1929", border: "1px solid rgba(255,255,255,0.1)" }}
                           >
-                            <PackageOpen size={20} style={{ color: "rgba(255,255,255,0.25)" }} />
+                            <img src={chestOpenedImg} alt="Baú aberto" className="w-10 h-10 object-contain opacity-60" />
                           </div>
                         );
                       }
