@@ -355,9 +355,7 @@ const PredictionResult = () => {
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
 
-        <ChestNotification {...chestProps} />
-
-        {chestProps.acertou && <div className="mb-1" />}
+        <ResultModal {...modalProps} />
 
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
@@ -382,9 +380,9 @@ const PredictionResult = () => {
 
 // ========== Battle Result ==========
 
-type ChestProps = { acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate> };
+type ModalProps = { acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate>; trophies: number; showModal: boolean; onClose: () => void };
 
-const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
+const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; modalProps: ModalProps }) => {
   const { acertou, moedaEscolhida, moedaVencedora, arenaCoins } = state;
   const trophies = acertou ? 40 : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -476,8 +474,7 @@ const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: Ba
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
-        <ChestNotification {...chestProps} />
-        {chestProps.acertou && <div className="mb-1" />}
+        <ResultModal {...modalProps} />
 
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
@@ -509,7 +506,7 @@ const RANGE_LABELS: Record<string, string> = {
   "2+": "> 2%",
 };
 
-const PrecisionResult = ({ state, navigate, user, streak, chestProps }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; chestProps: ChestProps }) => {
+const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state: PrecisionResultState; navigate: ReturnType<typeof useNavigate>; user: any; streak: number; modalProps: ModalProps }) => {
   const { acertou, faixaEscolhida, faixaReal, variacaoReal, retorno, precoInicial, precoFinal } = state;
   const trophies = acertou ? retorno : 15;
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -594,8 +591,7 @@ const PrecisionResult = ({ state, navigate, user, streak, chestProps }: { state:
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
-        <ChestNotification {...chestProps} />
-        {chestProps.acertou && <div className="mb-1" />}
+        <ResultModal {...modalProps} />
 
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
