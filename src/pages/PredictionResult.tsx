@@ -21,7 +21,18 @@ interface BattleResultState {
   [key: string]: unknown;
 }
 
-type ResultState = ClassicResultState | BattleResultState;
+interface PrecisionResultState {
+  modo: "precisao";
+  faixaEscolhida: string;
+  faixaReal: string;
+  variacaoReal: string;
+  acertou: boolean;
+  retorno: number;
+  precoInicial: number;
+  precoFinal: number;
+}
+
+type ResultState = ClassicResultState | BattleResultState | PrecisionResultState;
 
 const STREAK = 5;
 
@@ -88,7 +99,12 @@ const PredictionResult = () => {
   const state = location.state as ResultState | null;
 
   const isBattle = state?.modo === "batalha";
+  const isPrecision = state?.modo === "precisao";
   const acertou = state?.acertou ?? true;
+
+  if (isPrecision) {
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} />;
+  }
 
   if (isBattle) {
     return <BattleResult state={state as BattleResultState} navigate={navigate} />;
