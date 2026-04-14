@@ -169,10 +169,10 @@ const Chests = () => {
                             key={i}
                             onClick={() => handleOpenBattle(chest)}
                             disabled={openingChest}
-                            className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95 animate-pulse-glow"
+                            className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95 animate-pulse-glow overflow-hidden"
                             style={{ background: "#1A3A4E", border: "1.5px solid #5CC8E8" }}
                           >
-                            <Package size={24} style={{ color: "#5CC8E8" }} />
+                            <img src={chestClosedImg} alt="Baú disponível" className="w-10 h-10 object-contain" />
                           </button>
                         );
                       }
