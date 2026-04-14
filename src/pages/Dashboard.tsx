@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -235,14 +236,24 @@ const Dashboard = () => {
 
   const OceanBubbles = () => (
     <div className="ocean-bubbles">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {Array.from({ length: 50 }).map((_, i) => (
         <div key={i} className="bubble" />
       ))}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col relative">
+    <div className="min-h-screen font-dm-sans flex flex-col relative">
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${oceanCoralBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div className="fixed inset-0 z-0 bg-ocean-dark/60" />
       <OceanBubbles />
       <header className="flex items-center justify-between px-4 py-3 sm:px-6 relative z-10">
         <div className="flex items-center gap-3">
