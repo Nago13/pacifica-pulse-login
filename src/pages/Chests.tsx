@@ -116,7 +116,7 @@ const Chests = () => {
           backgroundRepeat: "no-repeat",
         }}
       />
-      <div className="fixed inset-0 z-0 bg-ocean-dark/70" />
+      <div className="fixed inset-0 z-0 bg-ocean-dark/40" />
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6 relative z-10">
         <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5">
           <h1 className="text-foreground text-[22px] font-bold">Meus Baús</h1>
