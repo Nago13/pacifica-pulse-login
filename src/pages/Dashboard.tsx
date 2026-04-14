@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -264,9 +265,7 @@ const Dashboard = () => {
               border: "1px solid hsl(var(--pacific))",
             }}
           >
-            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center shrink-0">
-              <span className="text-warning font-bold text-lg">₿</span>
-            </div>
+            <img src={bitcoinLogo} alt="Bitcoin" className="w-10 h-10 rounded-full shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-foreground text-sm font-bold">
                 {getModeLabel()} — {getPredictionLabel()}
@@ -291,9 +290,7 @@ const Dashboard = () => {
                 </span>
               </div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
-                  <span className="text-warning font-bold text-lg">₿</span>
-                </div>
+                <img src={bitcoinLogo} alt="Bitcoin" className="w-10 h-10 rounded-full" />
                 <div>
                   <span className="text-foreground text-2xl font-bold">Bitcoin</span>
                   <span className="text-ocean-muted text-sm ml-2">BTC</span>

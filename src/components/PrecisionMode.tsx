@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
 
@@ -71,9 +72,7 @@ const PrecisionMode = ({
 
       {/* BTC price display */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
-          <span className="text-warning font-bold text-lg">₿</span>
-        </div>
+        <img src={bitcoinLogo} alt="Bitcoin" className="w-10 h-10 rounded-full" />
         <div>
           <span className="text-foreground text-xl font-bold">Bitcoin</span>
           <span className="text-ocean-muted text-sm ml-2">BTC</span>

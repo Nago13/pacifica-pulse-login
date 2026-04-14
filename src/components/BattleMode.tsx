@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2, Check, ArrowLeft } from "lucide-react";
 import type { CoinPrices } from "@/pages/Dashboard";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import ethereumLogo from "@/assets/ethereum-logo.png";
+import solanaLogo from "@/assets/solana-logo.png";
 
 interface BattleModeProps {
   coins: CoinPrices;
@@ -16,25 +19,19 @@ const COIN_LIST = [
     id: "bitcoin",
     ticker: "BTC",
     name: "Bitcoin",
-    symbol: "₿",
-    symbolBg: "bg-warning/20",
-    symbolColor: "text-warning",
+    logo: bitcoinLogo,
   },
   {
     id: "ethereum",
     ticker: "ETH",
     name: "Ethereum",
-    symbol: "Ξ",
-    symbolBg: "bg-[hsl(260,60%,25%)]",
-    symbolColor: "text-[hsl(260,80%,70%)]",
+    logo: ethereumLogo,
   },
   {
     id: "solana",
     ticker: "SOL",
     name: "Solana",
-    symbol: "◎",
-    symbolBg: "bg-[hsl(280,50%,20%)]",
-    symbolColor: "text-[hsl(170,80%,60%)]",
+    logo: solanaLogo,
   },
 ];
 
@@ -98,9 +95,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                     : "border border-[rgba(92,200,232,0.15)] bg-card-surface opacity-60"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                  <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                </div>
+                <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                 <div className="text-center">
                   <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                   <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
@@ -164,9 +159,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                     {isSelected && <Check size={12} className="text-ocean-dark" />}
                   </div>
 
-                  <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                    <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                  </div>
+                  <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                   <div className="text-center">
                     <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                     <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
@@ -225,9 +218,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                       : "border border-[rgba(92,200,232,0.15)] bg-card-surface hover:border-pacific/40"
                   } ${notSelected ? "opacity-60" : ""}`}
                 >
-                  <div className={`w-10 h-10 rounded-full ${coin.symbolBg} flex items-center justify-center`}>
-                    <span className={`${coin.symbolColor} font-bold text-lg`}>{coin.symbol}</span>
-                  </div>
+                  <img src={coin.logo} alt={coin.name} className="w-10 h-10 rounded-full" />
                   <div className="text-center">
                     <span className="text-foreground text-sm font-bold block">{coin.name}</span>
                     <span className="text-ocean-muted text-[11px]">{coin.ticker}</span>
