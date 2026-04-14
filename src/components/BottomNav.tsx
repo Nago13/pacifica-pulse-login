@@ -1,15 +1,17 @@
-import { Home, Trophy, BarChart3, User } from "lucide-react";
+import { Home, Package, BarChart3, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/play" },
-  { icon: Trophy, label: "Troféus", path: "/leaderboard" },
-  { icon: BarChart3, label: "Ranking", path: "/leaderboard" },
-  { icon: User, label: "Perfil", path: "/profile" },
-];
+import { useUser } from "@/contexts/UserContext";
 
 const BottomNav = () => {
   const { pathname } = useLocation();
+  const { pendingBattleChestCount } = useUser();
+
+  const navItems = [
+    { icon: Home, label: "Home", path: "/play" },
+    { icon: Package, label: "Baús", path: "/chests", badge: pendingBattleChestCount > 0 ? pendingBattleChestCount : null },
+    { icon: BarChart3, label: "Ranking", path: "/leaderboard" },
+    { icon: User, label: "Perfil", path: "/profile" },
+  ];
 
   return (
     <nav
@@ -19,8 +21,15 @@ const BottomNav = () => {
       {navItems.map((item) => {
         const active = pathname === item.path;
         return (
-          <Link key={item.label} to={item.path} className="flex flex-col items-center gap-1">
-            <item.icon size={22} className={active ? "text-pacific" : "text-ocean-muted"} />
+          <Link key={item.label} to={item.path} className="relative flex flex-col items-center gap-1">
+            <div className="relative">
+              <item.icon size={22} className={active ? "text-pacific" : "text-ocean-muted"} />
+              {item.badge && (
+                <span className="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-danger text-foreground text-[9px] font-bold flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+            </div>
             <span className={`text-[10px] ${active ? "text-pacific font-medium" : "text-ocean-muted"}`}>
               {item.label}
             </span>
