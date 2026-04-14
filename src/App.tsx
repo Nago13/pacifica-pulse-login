@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import PredictionResult from "./pages/PredictionResult.tsx";
 import Profile from "./pages/Profile.tsx";
+import Leaderboard from "./pages/Leaderboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/result" element={<PredictionResult />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
