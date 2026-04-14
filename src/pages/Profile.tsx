@@ -3,6 +3,9 @@ import { Trophy, Flame, Copy, Check, ArrowUp, ArrowDown } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
+import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import ethereumLogo from "@/assets/ethereum-logo.png";
+import solanaLogo from "@/assets/solana-logo.png";
 
 const XIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -100,10 +103,10 @@ const Profile = () => {
     : 100;
   const faltam = Math.max(0, leagueInfo.next - userTrophies);
 
-  const assetMeta: Record<string, { icon: string; color: string }> = {
-    BTC: { icon: "₿", color: "text-warning" },
-    ETH: { icon: "Ξ", color: "text-pacific" },
-    SOL: { icon: "S", color: "text-success" },
+  const assetMeta: Record<string, { logo: string }> = {
+    BTC: { logo: bitcoinLogo },
+    ETH: { logo: ethereumLogo },
+    SOL: { logo: solanaLogo },
   };
 
   return (
@@ -187,7 +190,7 @@ const Profile = () => {
             ) : (
               <div className="flex flex-col">
                 {predictions.map((p, i) => {
-                  const meta = assetMeta[p.asset] ?? { icon: "?", color: "text-ocean-muted" };
+                  const meta = assetMeta[p.asset] ?? { logo: bitcoinLogo };
                   const dirLabel = p.direction === "up" ? "subiu" : p.direction === "down" ? "caiu" : p.mode;
                   const date = new Date(p.created_at);
                   const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -195,7 +198,7 @@ const Profile = () => {
                   return (
                     <div key={i}>
                       <div className="flex items-center gap-3 py-3">
-                        <div className={`w-9 h-9 rounded-full bg-ocean-dark flex items-center justify-center ${meta.color} font-bold text-sm shrink-0`}>{meta.icon}</div>
+                        <img src={meta.logo} alt={p.asset} className="w-9 h-9 rounded-full shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-foreground text-sm font-medium">
                             {p.asset} {dirLabel}{" "}
