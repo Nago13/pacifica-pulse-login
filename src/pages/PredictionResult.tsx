@@ -259,7 +259,7 @@ const PredictionResult = () => {
         setNoChestEarned(true);
         }
       }
-      setShowResultModal(true);
+      if (acertou) setShowResultModal(true);
     };
     doSave();
   }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
