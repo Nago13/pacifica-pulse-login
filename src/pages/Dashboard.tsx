@@ -58,6 +58,11 @@ const Dashboard = () => {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [gameMode, setGameMode] = useState<GameMode>("classic");
 
+  // Stats state
+  const [acertosHoje, setAcertosHoje] = useState<string>("—");
+  const [taxaAcerto, setTaxaAcerto] = useState<string>("—");
+  const [ranking, setRanking] = useState<string>("—");
+
   // Battle state
   const [battleActive, setBattleActive] = useState(false);
   const [battleCountdown, setBattleCountdown] = useState(0);
