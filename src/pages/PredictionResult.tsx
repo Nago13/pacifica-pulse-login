@@ -199,6 +199,8 @@ const PredictionResult = () => {
   const [noChestEarned, setNoChestEarned] = useState(false);
   const [bausRestantes, setBausRestantes] = useState(0);
   const [currentMode, setCurrentMode] = useState("classico");
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [computedTrophies, setComputedTrophies] = useState(0);
 
   const isBattle = state?.modo === "batalha";
   const isPrecision = state?.modo === "precisao";
@@ -234,6 +236,7 @@ const PredictionResult = () => {
     }
 
     setCurrentMode(mode);
+    setComputedTrophies(Math.abs(trophiesDelta));
 
     const doSave = async () => {
       await savePrediction({
@@ -253,21 +256,22 @@ const PredictionResult = () => {
             if (remaining === 0) setChestSlotsFull(true);
           }
         } else {
-          setNoChestEarned(true);
+        setNoChestEarned(true);
         }
       }
+      setShowResultModal(true);
     };
     doSave();
   }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
 
-  const chestProps = { acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode: currentMode, navigate };
+  const modalProps = { acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode: currentMode, navigate, trophies: computedTrophies, showModal: showResultModal, onClose: () => setShowResultModal(false) };
 
   if (isPrecision) {
-    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} modalProps={modalProps} />;
   }
 
   if (isBattle) {
-    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestProps={chestProps} />;
+    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} modalProps={modalProps} />;
   }
 
   // Classic mode
