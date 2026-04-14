@@ -56,6 +56,7 @@ const Dashboard = () => {
   const predictionDir = activePrediction?.direction as "up" | "down" | null ?? null;
   const predictionPrice = activePrediction?.priceInitial ?? null;
   const countdown = predictionActive ? timeRemaining : 0;
+  const [gameMode, setGameMode] = useState<GameMode>("classic");
 
   // Stats state
   const [acertosHoje, setAcertosHoje] = useState<string>("—");
