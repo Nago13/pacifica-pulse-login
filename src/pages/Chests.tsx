@@ -111,8 +111,8 @@ const Chests = () => {
         className="fixed inset-0 z-0"
         style={{
           backgroundImage: `url(${oceanTreasureBg})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center bottom",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         }}
       />
