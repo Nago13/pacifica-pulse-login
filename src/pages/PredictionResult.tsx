@@ -174,11 +174,11 @@ const PredictionResult = () => {
   }, [state, savePrediction, refreshUser, acertou, isBattle, isPrecision, streak, earnBattleChest, countBattleChestsToday]);
 
   if (isPrecision) {
-    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} />;
+    return <PrecisionResult state={state as PrecisionResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
   }
 
   if (isBattle) {
-    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} />;
+    return <BattleResult state={state as BattleResultState} navigate={navigate} user={user} streak={streak} chestEarned={chestEarned} chestSlotsFull={chestSlotsFull} />;
   }
 
   // Classic mode
