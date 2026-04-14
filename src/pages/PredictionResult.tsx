@@ -1,17 +1,30 @@
 import { useState, useEffect, useMemo } from "react";
-import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw } from "lucide-react";
+import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-interface ResultState {
+interface ClassicResultState {
   acertou: boolean;
   variacao: string;
   ativo: string;
   direcao: "up" | "down";
   precoInicial: number;
   precoFinal: number;
+  modo?: undefined;
 }
 
-const STREAK = 5; // mock streak
+interface BattleResultState {
+  modo: "batalha";
+  moedaEscolhida: string;
+  moedaVencedora: string;
+  acertou: boolean;
+  variacaoBTC: string;
+  variacaoETH: string;
+  variacaoSOL: string;
+}
+
+type ResultState = ClassicResultState | BattleResultState;
+
+const STREAK = 5;
 
 const Particles = ({ color }: { color: string }) => {
   const particles = useMemo(
@@ -64,16 +77,28 @@ const XIcon = () => (
   </svg>
 );
 
+const COIN_META: Record<string, { name: string; symbol: string; symbolBg: string; symbolColor: string }> = {
+  BTC: { name: "Bitcoin", symbol: "₿", symbolBg: "bg-warning/20", symbolColor: "text-warning" },
+  ETH: { name: "Ethereum", symbol: "Ξ", symbolBg: "bg-[hsl(260,60%,25%)]", symbolColor: "text-[hsl(260,80%,70%)]" },
+  SOL: { name: "Solana", symbol: "◎", symbolBg: "bg-[hsl(280,50%,20%)]", symbolColor: "text-[hsl(170,80%,60%)]" },
+};
+
 const PredictionResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as ResultState | null;
 
-  // Fallback if navigated directly
+  const isBattle = state?.modo === "batalha";
   const acertou = state?.acertou ?? true;
-  const variacao = state?.variacao ?? "0.00";
-  const ativo = state?.ativo ?? "BTC";
-  const direcao = state?.direcao ?? "up";
+
+  if (isBattle) {
+    return <BattleResult state={state as BattleResultState} navigate={navigate} />;
+  }
+
+  // Classic mode
+  const variacao = (state as ClassicResultState)?.variacao ?? "0.00";
+  const ativo = (state as ClassicResultState)?.ativo ?? "BTC";
+  const direcao = (state as ClassicResultState)?.direcao ?? "up";
 
   const baseTrophies = acertou ? 25 : 15;
   const hasMultiplier = acertou && STREAK > 3;
@@ -81,7 +106,7 @@ const PredictionResult = () => {
 
   const dirLabel = direcao === "up" ? "subiu" : "caiu";
   const actualMovement = state
-    ? (state.precoFinal >= state.precoInicial ? "subiu" : "caiu")
+    ? ((state as ClassicResultState).precoFinal >= (state as ClassicResultState).precoInicial ? "subiu" : "caiu")
     : dirLabel;
 
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -119,11 +144,7 @@ const PredictionResult = () => {
         </p>
 
         <div className="text-center mb-5">
-          <CountUp
-            target={finalTrophies}
-            prefix={acertou ? "+" : "−"}
-            className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`}
-          />
+          <CountUp target={finalTrophies} prefix={acertou ? "+" : "−"} className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
           <p className="text-ocean-muted text-xs mt-1">troféus</p>
         </div>
 
@@ -168,17 +189,11 @@ const PredictionResult = () => {
           <XIcon /> Postar no X e ganhar +30 troféus
         </a>
 
-        <button
-          onClick={() => navigate("/leaderboard")}
-          className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3"
-        >
+        <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
           <BarChart3 size={16} /> Ver leaderboard
         </button>
 
-        <button
-          onClick={() => navigate("/play")}
-          className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30"
-        >
+        <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
       </div>
@@ -188,6 +203,122 @@ const PredictionResult = () => {
       >
         <Package size={18} /> Abrir baú disponível
       </button>
+    </div>
+  );
+};
+
+// ========== Battle Result ==========
+
+const BattleResult = ({ state, navigate }: { state: BattleResultState; navigate: ReturnType<typeof useNavigate> }) => {
+  const { acertou, moedaEscolhida, moedaVencedora, variacaoBTC, variacaoETH, variacaoSOL } = state;
+  const trophies = acertou ? 40 : 15;
+  const borderColor = acertou ? "border-success" : "border-danger";
+  const particleColor = acertou ? "hsl(160,74%,42%)" : "hsl(355,79%,59%)";
+
+  const variations: { ticker: string; variacao: string }[] = [
+    { ticker: "BTC", variacao: variacaoBTC },
+    { ticker: "ETH", variacao: variacaoETH },
+    { ticker: "SOL", variacao: variacaoSOL },
+  ];
+
+  const tweetText = encodeURIComponent(
+    acertou
+      ? `🏆 Acertei no modo Batalha do Pacifica Pulse! ${moedaEscolhida} foi a campeã! 🪙\n\nBTC: ${variacaoBTC} | ETH: ${variacaoETH} | SOL: ${variacaoSOL}\n\nTente também 👇`
+      : `📊 Errei no modo Batalha, a campeã foi ${moedaVencedora}!\n\nBTC: ${variacaoBTC} | ETH: ${variacaoETH} | SOL: ${variacaoSOL}\n\nTente também 👇`
+  );
+  const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
+
+  return (
+    <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      <Particles color={particleColor} />
+
+      <div className={`relative z-10 w-full max-w-md rounded-[16px] bg-card-surface p-6 sm:p-8 animate-result-enter border-2 ${borderColor}`}>
+        <div className="flex justify-center mb-4">
+          {acertou ? (
+            <div className="w-16 h-16 rounded-full bg-success flex items-center justify-center">
+              <Trophy size={32} className="text-ocean-dark" strokeWidth={2} />
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-danger flex items-center justify-center">
+              <X size={32} className="text-ocean-dark" strokeWidth={3} />
+            </div>
+          )}
+        </div>
+
+        <h1 className="text-foreground text-[28px] font-bold text-center mb-1">
+          {acertou ? "Você acertou!" : "Dessa vez não..."}
+        </h1>
+        <p className="text-ocean-muted text-center text-sm mb-6">
+          {acertou
+            ? `${moedaEscolhida} foi a campeã!`
+            : `A campeã foi ${moedaVencedora}`}
+        </p>
+
+        {/* Coin comparison table */}
+        <div className="rounded-[12px] bg-ocean-dark p-4 mb-5 space-y-3" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
+          {variations.map((v) => {
+            const meta = COIN_META[v.ticker];
+            const isWinner = v.ticker === moedaVencedora;
+            const isChosen = v.ticker === moedaEscolhida;
+            const varNum = parseFloat(v.variacao);
+
+            return (
+              <div
+                key={v.ticker}
+                className={`flex items-center gap-3 p-3 rounded-[10px] transition-all ${
+                  isWinner ? "border-2 border-success bg-success/10" : "border border-[rgba(92,200,232,0.08)]"
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full ${meta.symbolBg} flex items-center justify-center shrink-0`}>
+                  <span className={`${meta.symbolColor} font-bold text-sm`}>{meta.symbol}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-foreground text-sm font-bold">{meta.name}</span>
+                    <span className="text-ocean-muted text-[11px]">{v.ticker}</span>
+                    {isChosen && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-pacific/20 text-pacific ml-auto">SUA APOSTA</span>
+                    )}
+                    {isWinner && !isChosen && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/20 text-success ml-auto">CAMPEÃ</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {varNum >= 0 ? <ArrowUp size={12} className="text-success" /> : <ArrowDown size={12} className="text-danger" />}
+                  <span className={`text-sm font-bold ${varNum >= 0 ? "text-success" : "text-danger"}`}>
+                    {v.variacao}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="text-center mb-5">
+          <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
+          <p className="text-ocean-muted text-xs mt-1">troféus</p>
+        </div>
+
+        <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
+
+        <a
+          href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
+          target="_blank" rel="noopener noreferrer"
+          className="w-full h-12 rounded-[12px] flex items-center justify-center gap-2 text-foreground font-medium text-sm transition-all duration-200 hover:opacity-80 mb-3"
+          style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.2)" }}
+        >
+          <XIcon /> Postar no X e ganhar +30 troféus
+        </a>
+
+        <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
+          <BarChart3 size={16} /> Ver leaderboard
+        </button>
+
+        <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
+          <RotateCcw size={16} /> Jogar novamente
+        </button>
+      </div>
     </div>
   );
 };
