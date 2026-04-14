@@ -171,43 +171,20 @@ const Dashboard = () => {
     }, 1000);
   };
 
-  // ── Classic ──
+  // ── Classic ── (now uses global context for persistence)
   const handlePress = (dir: "up" | "down") => {
     if (predictionActive || price === null) return;
-    setPredictionDir(dir);
-    setPredictionPrice(price);
-    setPredictionActive(true);
-    setCountdown(COUNTDOWN_SECONDS);
-    startCountdown(countdownRef, setCountdown);
+    setActivePrediction({
+      mode: "classico",
+      asset: "BTC",
+      direction: dir,
+      priceInitial: price,
+      startedAt: Date.now(),
+      durationSeconds: COUNTDOWN_SECONDS,
+    });
   };
 
-  useEffect(() => {
-    if (countdown === 0 && predictionActive && predictionPrice !== null && predictionDir) {
-      const resolve = async () => {
-        const result = await fetchPrices();
-        const finalPrice = result?.bitcoin?.price ?? price;
-        if (finalPrice === null) return;
-        const variacao = ((finalPrice - predictionPrice) / predictionPrice) * 100;
-        const priceWentUp = finalPrice > predictionPrice;
-        const acertou = (predictionDir === "up" && priceWentUp) || (predictionDir === "down" && !priceWentUp);
-        setPredictionActive(false);
-        setPredictionDir(null);
-        setPredictionPrice(null);
-        navigate("/result", {
-          state: {
-            acertou,
-            variacao: Math.abs(variacao).toFixed(2),
-            ativo: "BTC",
-            direcao: predictionDir,
-            precoInicial: predictionPrice,
-            precoFinal: finalPrice,
-            streak: user?.streak ?? 0,
-          },
-        });
-      };
-      resolve();
-    }
-  }, [countdown, predictionActive, predictionPrice, predictionDir, fetchPrices, navigate, price, user]);
+  // Classic resolution is handled by UserContext auto-resolve
 
   // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
@@ -307,10 +284,9 @@ const Dashboard = () => {
     }
   }, [precisionCountdown, precisionActive, precisionPrice, precisionRange, precisionReward, fetchPrices, navigate, price, user]);
 
-  // Cleanup
+  // Cleanup (battle/precision only — classic uses context)
   useEffect(() => {
     return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
       if (battleCountdownRef.current) clearInterval(battleCountdownRef.current);
       if (precisionCountdownRef.current) clearInterval(precisionCountdownRef.current);
     };
