@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GameModeSelector, { type GameMode } from "@/components/GameModeSelector";
 import BattleMode from "@/components/BattleMode";
+import PrecisionMode from "@/components/PrecisionMode";
+import type { PrecisionRange } from "@/components/PrecisionMode";
 
 const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true";
 const COUNTDOWN_SECONDS = 60;
