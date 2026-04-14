@@ -139,28 +139,43 @@ const Chests = () => {
           {/* Battle Chests by Mode */}
           <div className="flex flex-col gap-4">
             {MODES.map(({ key, label }) => {
-              const { total, unopened } = getModeCounts(key);
-              const modeChests = battleChests.filter(c => c.mode === key);
+              const { opened, unopened } = getModeCounts(key);
 
               return (
                 <div key={key} className="rounded-[16px] bg-card-surface p-4" style={{ border: cardBorder }}>
                   <span className="text-foreground font-bold text-sm mb-3 block">{label}</span>
                   <div className="flex items-center gap-2 mb-2">
                     {Array.from({ length: 5 }).map((_, i) => {
-                      const chest = unopened[i];
-                      const hasChest = !!chest;
-
-                      return hasChest ? (
-                        <button
-                          key={i}
-                          onClick={() => handleOpenBattle(chest)}
-                          disabled={openingChest}
-                          className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95"
-                          style={{ background: "#1A3A4E", border: "1.5px solid #5CC8E8" }}
-                        >
-                          <Package size={24} style={{ color: "#5CC8E8" }} />
-                        </button>
-                      ) : (
+                      // State 1: Already opened
+                      if (i < opened.length) {
+                        return (
+                          <div
+                            key={i}
+                            className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default"
+                            style={{ background: "#0A1929", border: "1px solid rgba(255,255,255,0.1)" }}
+                          >
+                            <PackageOpen size={20} style={{ color: "rgba(255,255,255,0.25)" }} />
+                          </div>
+                        );
+                      }
+                      // State 2: Available to open
+                      const unopenedIdx = i - opened.length;
+                      if (unopenedIdx < unopened.length) {
+                        const chest = unopened[unopenedIdx];
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => handleOpenBattle(chest)}
+                            disabled={openingChest}
+                            className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95 animate-pulse-glow"
+                            style={{ background: "#1A3A4E", border: "1.5px solid #5CC8E8" }}
+                          >
+                            <Package size={24} style={{ color: "#5CC8E8" }} />
+                          </button>
+                        );
+                      }
+                      // State 3: Empty slot
+                      return (
                         <div
                           key={i}
                           className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default"
@@ -173,8 +188,10 @@ const Chests = () => {
                   </div>
                   <span className="text-ocean-muted text-[11px]">
                     {unopened.length > 0
-                      ? `${unopened.length} baú(s) disponível(is) para abrir · ${5 - unopened.length} slot(s) restantes hoje`
-                      : "Nenhum baú ainda — acerte previsões para ganhar!"}
+                      ? `${unopened.length} disponível(is) · ${opened.length} aberto(s) hoje`
+                      : opened.length > 0
+                        ? "Todos os baús abertos — volte amanhã!"
+                        : "Nenhum baú ainda — acerte previsões para ganhar!"}
                   </span>
                 </div>
               );
