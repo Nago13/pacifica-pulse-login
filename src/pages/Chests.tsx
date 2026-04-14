@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Package, Lock, Gift, Clock } from "lucide-react";
 import chestOpenedImg from "@/assets/chest-opened.png";
+import oceanTreasureBg from "@/assets/ocean-treasure-bg.jpg";
 import chestClosedImg from "@/assets/chest-closed.png";
 import BottomNav from "@/components/BottomNav";
 import { useUser, type BattleChest } from "@/contexts/UserContext";
@@ -105,8 +106,18 @@ const Chests = () => {
   };
 
   return (
-    <div className="min-h-screen bg-ocean-dark font-dm-sans flex flex-col">
-      <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
+    <div className="min-h-screen font-dm-sans flex flex-col relative">
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${oceanTreasureBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div className="fixed inset-0 z-0 bg-ocean-dark/70" />
+      <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6 relative z-10">
         <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5">
           <h1 className="text-foreground text-[22px] font-bold">Meus Baús</h1>
 
