@@ -438,6 +438,9 @@ const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: Ba
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
 
+        <ChestNotification {...chestProps} />
+        {chestProps.acertou && <div className="mb-1" />}
+
         <a
           href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`}
           target="_blank" rel="noopener noreferrer"
@@ -454,8 +457,6 @@ const BattleResult = ({ state, navigate, user, streak, chestProps }: { state: Ba
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
           <RotateCcw size={16} /> Jogar novamente
         </button>
-
-        <ChestNotification {...chestProps} />
       </div>
     </div>
   );
