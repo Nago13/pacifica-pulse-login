@@ -99,7 +99,7 @@ export function getFundingColor(funding: string): string {
 
 export function getFundingSentiment(funding: string): { text: string; color: string } {
   const num = parseFloat(funding);
-  if (Math.abs(num) < 0.0001) return { text: "Mercado equilibrado", color: "#8BB8CC" };
-  if (num > 0) return { text: "Mercado otimista — mais compradores que vendedores na Pacifica", color: "#1DB887" };
-  return { text: "Mercado pessimista — mais vendedores que compradores na Pacifica", color: "#E84855" };
+  if (Math.abs(num) < 0.0001) return { text: "Balanced market", color: "#8BB8CC" };
+  if (num > 0) return { text: "Bullish market — more buyers than sellers on Pacifica", color: "#1DB887" };
+  return { text: "Bearish market — more sellers than buyers on Pacifica", color: "#E84855" };
 }

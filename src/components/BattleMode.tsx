@@ -39,8 +39,6 @@ const PACIFICA_KEY_MAP: Record<string, keyof PacificaPrices> = {
 };
 
 const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores, buzzLastUpdated, pacificaData, usingPacifica }: BattleModeProps) => {
-  const formatBuzzTime = (d: Date) =>
-    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [step, setStep] = useState<1 | 2>(1);
   const [arenaSelection, setArenaSelection] = useState<string[]>(["bitcoin", "ethereum", "solana"]);
   const [betChoice, setBetChoice] = useState<string | null>(null);
@@ -96,17 +94,16 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
     );
   };
 
-  // If battle is active, always show step 2 state
   if (battleActive) {
     return (
       <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-foreground text-lg font-bold">Batalha de Moedas</h2>
+          <h2 className="text-foreground text-lg font-bold">Coin Battle</h2>
           <span className={`font-bold text-lg tabular-nums ${timerLow ? "text-danger" : "text-pacific"}`}>
             {formatTimer(battleCountdown)}
           </span>
         </div>
-        <p className="text-ocean-muted text-xs mb-5">Aguardando resultado da batalha...</p>
+        <p className="text-ocean-muted text-xs mb-5">Awaiting battle result...</p>
 
         <div className={`grid gap-3 mb-5 ${arenaCoins.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
           {arenaCoins.map((coin) => {
@@ -157,7 +154,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
         <div className="flex items-center justify-center gap-2">
           <Loader2 size={14} className="text-ocean-muted animate-spin" />
           <span className="text-ocean-muted text-sm">
-            Apostou em {coinIdMap[battleChoice!] ?? ""} — Aguardando resultado...
+            Bet on {coinIdMap[battleChoice!] ?? ""} — Awaiting result...
           </span>
         </div>
 
@@ -174,13 +171,13 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
   return (
     <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-foreground text-lg font-bold">Batalha de Moedas</h2>
+        <h2 className="text-foreground text-lg font-bold">Coin Battle</h2>
         <span className="font-bold text-lg tabular-nums text-pacific">01:00</span>
       </div>
 
       {step === 1 ? (
         <>
-          <p className="text-ocean-muted text-xs mb-5">Escolha 2 ou 3 moedas para batalhar</p>
+          <p className="text-ocean-muted text-xs mb-5">Choose 2 or 3 coins to battle</p>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
             {COIN_LIST.map((coin) => {
@@ -197,7 +194,6 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                       : "border border-[rgba(92,200,232,0.15)] bg-card-surface hover:border-pacific/40"
                   }`}
                 >
-                  {/* Checkbox */}
                   <div className={`absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                     isSelected ? "border-pacific bg-pacific" : "border-ocean-muted"
                   }`}>
@@ -240,7 +236,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
           </div>
 
           {selectionError && (
-            <p className="text-danger text-xs text-center mb-3">Selecione pelo menos 2 moedas</p>
+            <p className="text-danger text-xs text-center mb-3">Select at least 2 coins</p>
           )}
 
           <button
@@ -252,12 +248,12 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                 : "bg-ocean-dark text-ocean-muted cursor-not-allowed opacity-40"
             }`}
           >
-            Montar Arena →
+            Build Arena →
           </button>
         </>
       ) : (
         <>
-          <p className="text-ocean-muted text-xs mb-5">Qual vai valorizar mais em 60 segundos?</p>
+          <p className="text-ocean-muted text-xs mb-5">Which will gain more in 60 seconds?</p>
 
           <div className={`grid gap-3 mb-4 ${arenaCoins.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
             {arenaCoins.map((coin) => {
@@ -303,7 +299,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
             onClick={() => { setStep(1); setBetChoice(null); }}
             className="flex items-center gap-1 text-ocean-muted text-xs mb-3 hover:text-pacific transition-colors"
           >
-            <ArrowLeft size={12} /> Trocar moedas
+            <ArrowLeft size={12} /> ← Change coins
           </button>
 
           <button
@@ -315,7 +311,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                 : "bg-ocean-dark text-ocean-muted cursor-not-allowed opacity-40"
             }`}
           >
-            {betChoice ? `Confirmar aposta em ${coinIdMap[betChoice] ?? betChoice.toUpperCase()}` : "Selecione uma moeda"}
+            {betChoice ? `Confirm bet on ${coinIdMap[betChoice] ?? betChoice.toUpperCase()}` : "Select a coin"}
           </button>
         </>
       )}
