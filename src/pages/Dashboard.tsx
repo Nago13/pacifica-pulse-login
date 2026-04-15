@@ -458,6 +458,7 @@ const Dashboard = () => {
             onConfirm={handleBattleConfirm}
             formatTimer={formatTimer}
             buzzScores={buzzAll}
+            buzzLastUpdated={buzzBattleLastUpdated}
           />
         ) : (
           <PrecisionMode
@@ -473,6 +474,7 @@ const Dashboard = () => {
             formatTimer={formatTimer}
             formatPrice={formatPrice}
             buzzScore={buzzBTC}
+            buzzLastUpdated={buzzLastUpdated}
           />
         )}
       </main>
