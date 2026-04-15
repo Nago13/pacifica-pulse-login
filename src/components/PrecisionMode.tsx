@@ -125,7 +125,12 @@ const PrecisionMode = ({
         {buzzScore === null ? (
           <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
         ) : (
-          <p className="text-ocean-muted text-[11px] mt-1.5">{buzzScore.label}</p>
+          <>
+            <p className="text-ocean-muted text-[11px] mt-1.5">{buzzScore.label}</p>
+            {buzzLastUpdated && (
+              <p className="text-[10px] mt-0.5" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
+            )}
+          </>
         )}
       </div>
 
