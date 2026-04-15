@@ -254,19 +254,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolveBattle = async () => {
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica) throw new Error("Pacifica unavailable");
       const arenaIds = activePrediction!.assetsArena ?? [];
-      const coinIds = arenaIds.join(",");
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
       const pricesInitial = activePrediction!.pricesInitial ?? {};
+
+      const PACIFICA_MAP: Record<string, keyof typeof pacifica> = {
+        bitcoin: "bitcoin", ethereum: "ethereum", solana: "solana",
+      };
 
       const arenaVariations: Record<string, number> = {};
       for (const coinId of arenaIds) {
         const ticker = COIN_ID_MAP[coinId] ?? coinId.toUpperCase();
         const startPrice = pricesInitial[ticker] ?? 0;
-        const endPrice = data[coinId]?.usd ?? startPrice;
+        const asset = pacifica[PACIFICA_MAP[coinId]];
+        const endPrice = asset?.mark ?? startPrice;
         arenaVariations[ticker] = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
       }
 
