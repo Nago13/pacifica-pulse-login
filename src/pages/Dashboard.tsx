@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
 import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
