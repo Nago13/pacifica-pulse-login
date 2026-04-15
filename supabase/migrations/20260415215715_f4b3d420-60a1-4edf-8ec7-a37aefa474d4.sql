@@ -1,0 +1,3 @@
+ALTER TABLE public.users 
+ADD COLUMN IF NOT EXISTS privy_id text UNIQUE,
+ADD COLUMN IF NOT EXISTS email text;
