@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2, Check, ArrowLeft } from "lucide-react";
 import type { CoinPrices } from "@/pages/Dashboard";
+import type { BuzzResult } from "@/lib/elfaApi";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
 import solanaLogo from "@/assets/solana-logo.png";
@@ -12,6 +13,7 @@ interface BattleModeProps {
   battleChoice: string | null;
   onConfirm: (coinId: string, arenaCoins: string[]) => void;
   formatTimer: (s: number) => string;
+  buzzScores: Record<string, BuzzResult>;
 }
 
 const COIN_LIST = [
@@ -38,7 +40,7 @@ const COIN_LIST = [
 const formatPrice = (p: number) =>
   Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer }: BattleModeProps) => {
+const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores }: BattleModeProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [arenaSelection, setArenaSelection] = useState<string[]>(["bitcoin", "ethereum", "solana"]);
   const [betChoice, setBetChoice] = useState<string | null>(null);
@@ -109,6 +111,17 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                         {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                       </span>
                     </div>
+                    {buzzScores[coin.ticker] && (
+                      <div className="w-full mt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-ocean-muted text-[9px]">Buzz</span>
+                          <span className="text-pacific text-[9px] font-bold">{buzzScores[coin.ticker].score}</span>
+                        </div>
+                        <div className="w-full h-1 rounded-full bg-ocean-dark mt-0.5">
+                          <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzScores[coin.ticker].score}%` }} />
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -173,6 +186,17 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                           {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                         </span>
                       </div>
+                      {buzzScores[coin.ticker] && (
+                        <div className="w-full mt-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-ocean-muted text-[9px]">Buzz</span>
+                            <span className="text-pacific text-[9px] font-bold">{buzzScores[coin.ticker].score}</span>
+                          </div>
+                          <div className="w-full h-1 rounded-full bg-ocean-dark mt-0.5">
+                            <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzScores[coin.ticker].score}%` }} />
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="h-4 w-16 rounded bg-ocean-dark animate-pulse" />
