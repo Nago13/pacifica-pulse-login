@@ -593,6 +593,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user, countBattleChestsToday, refreshPendingChests]);
 
+  earnBattleChestRef.current = earnBattleChest;
+
   const getBattleChests = useCallback(async (): Promise<BattleChest[]> => {
     if (!user || user.id === "local") return [];
     try {
