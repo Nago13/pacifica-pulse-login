@@ -451,9 +451,6 @@ const Dashboard = () => {
                 ) : (
                   <>
                     <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
-                    {buzzLastUpdated && (
-                      <p className="text-[10px] mt-0.5" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
-                    )}
                   </>
                 )}
               </div>
