@@ -81,7 +81,7 @@ const Dashboard = () => {
       setBuzzBTC(result);
     };
     fetchBuzz();
-    buzzInterval.current = setInterval(fetchBuzz, 5 * 60 * 1000);
+    buzzInterval.current = setInterval(fetchBuzz, 60 * 1000);
     return () => { if (buzzInterval.current) clearInterval(buzzInterval.current); };
   }, []);
 
