@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import PacificaResultBanner from "@/components/PacificaResultBanner";
 import { Check, X, Flame, Trophy, Package, BarChart3, RotateCcw, ArrowUp, ArrowDown, Target, ArrowRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
@@ -377,6 +378,8 @@ const PredictionResult = () => {
           <RotateCcw size={16} /> Play again
         </button>
       </div>
+
+      <PacificaResultBanner league={user?.league ?? "Bronze"} />
     </div>
   );
 };
@@ -494,6 +497,8 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
           <RotateCcw size={16} /> Play again
         </button>
       </div>
+
+      <PacificaResultBanner league={user?.league ?? "Bronze"} />
     </div>
   );
 };
