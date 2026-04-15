@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
+import type { BuzzResult } from "@/lib/elfaApi";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
 
@@ -16,6 +17,7 @@ interface PrecisionModeProps {
   onConfirm: (range: PrecisionRange, reward: number) => void;
   formatTimer: (s: number) => string;
   formatPrice: (p: number) => string;
+  buzzScore: BuzzResult | null;
 }
 
 const RANGES: {
@@ -47,7 +49,7 @@ const RiskBars = ({ filled, color }: { filled: number; color: string }) => (
 const PrecisionMode = ({
   price, change24h, flashing, apiError,
   precisionActive, precisionCountdown, precisionRange, precisionPrice,
-  onConfirm, formatTimer, formatPrice,
+  onConfirm, formatTimer, formatPrice, buzzScore,
 }: PrecisionModeProps) => {
   const [selected, setSelected] = useState<PrecisionRange | null>(null);
   const timerLow = precisionCountdown < 10 && precisionCountdown > 0;
@@ -101,6 +103,26 @@ const PrecisionMode = ({
             </span>
             <span className="text-ocean-muted text-xs ml-1">24h</span>
           </>
+        )}
+      </div>
+
+      {/* Buzz Score */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-ocean-muted text-xs">Buzz Score</span>
+          {buzzScore === null ? (
+            <div className="h-4 w-12 rounded bg-ocean-dark animate-pulse" />
+          ) : (
+            <span className="text-pacific text-xs font-bold">{buzzScore.score}/100</span>
+          )}
+        </div>
+        <div className="w-full h-2 rounded-full bg-ocean-dark">
+          <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzScore?.score ?? 0}%` }} />
+        </div>
+        {buzzScore === null ? (
+          <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
+        ) : (
+          <p className="text-ocean-muted text-[11px] mt-1.5">{buzzScore.label}</p>
         )}
       </div>
 
