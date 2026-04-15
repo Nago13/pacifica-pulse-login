@@ -7,9 +7,9 @@ import BottomNav from "@/components/BottomNav";
 import { useUser, type BattleChest } from "@/contexts/UserContext";
 
 const MODES = [
-  { key: "classico", label: "Clássico" },
-  { key: "batalha", label: "Batalha" },
-  { key: "precisao", label: "Precisão" },
+  { key: "classico", label: "Classic" },
+  { key: "batalha", label: "Battle" },
+  { key: "precisao", label: "Precision" },
 ];
 
 const cardBorder = "1px solid rgba(92,200,232,0.15)";
@@ -35,7 +35,6 @@ const Chests = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Daily countdown
   useEffect(() => {
     if (dailyAvailable) { setDailyCountdown(""); return; }
     const update = () => {
@@ -104,11 +103,11 @@ const Chests = () => {
 
   const rewardLabel = (r: { tipo: string; valor: number; label?: string }) => {
     if (r.label) return r.label;
-    if (r.tipo === "moedas") return `+${r.valor} troféus!`;
-    if (r.tipo === "trofeus") return `+${r.valor} troféus bônus!`;
-    if (r.tipo === "escudo") return `${r.valor} escudo protetor!`;
+    if (r.tipo === "moedas") return `+${r.valor} trophies!`;
+    if (r.tipo === "trofeus") return `+${r.valor} bonus trophies!`;
+    if (r.tipo === "escudo") return `${r.valor} streak shield!`;
     if (r.tipo === "xp_boost") return `${r.valor}× XP Boost!`;
-    if (r.tipo === "raro") return "Drop raro!";
+    if (r.tipo === "raro") return "Rare drop!";
     return `${r.tipo}: ${r.valor}`;
   };
 
@@ -126,21 +125,20 @@ const Chests = () => {
       <div className="fixed inset-0 z-0 bg-ocean-dark/40" />
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6 relative z-10">
         <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5">
-          <h1 className="text-foreground text-[22px] font-bold">Meus Baús</h1>
+          <h1 className="text-foreground text-[22px] font-bold">My Chests</h1>
 
-          {/* Daily Chest */}
           <div className="rounded-[16px] bg-card-surface p-5" style={{ border: cardBorder }}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-[12px] bg-success/20 flex items-center justify-center">
                 <Gift size={24} className="text-success" />
               </div>
               <div className="flex-1">
-                <span className="text-foreground font-bold text-sm">Baú Diário</span>
+                <span className="text-foreground font-bold text-sm">Daily Chest</span>
                 {dailyAvailable ? (
-                  <p className="text-success text-xs font-medium">Disponível!</p>
+                  <p className="text-success text-xs font-medium">Available!</p>
                 ) : (
                   <p className="text-ocean-muted text-xs flex items-center gap-1">
-                    <Clock size={10} /> Abre em {dailyCountdown}
+                    <Clock size={10} /> Opens in {dailyCountdown}
                   </p>
                 )}
               </div>
@@ -150,13 +148,12 @@ const Chests = () => {
                   disabled={openingChest}
                   className="px-4 py-2 rounded-[10px] bg-success text-ocean-dark font-bold text-sm transition-all hover:opacity-80"
                 >
-                  Abrir
+                  Open
                 </button>
               )}
             </div>
           </div>
 
-          {/* Battle Chests by Mode */}
           <div className="flex flex-col gap-4">
             {MODES.map(({ key, label }) => {
               const { opened, unopened } = getModeCounts(key);
@@ -166,7 +163,6 @@ const Chests = () => {
                   <span className="text-foreground font-bold text-sm mb-3 block">{label}</span>
                   <div className="flex items-center gap-2 mb-2">
                     {Array.from({ length: 5 }).map((_, i) => {
-                      // State 1: Already opened
                       if (i < opened.length) {
                         return (
                           <div
@@ -174,11 +170,10 @@ const Chests = () => {
                             className="w-11 h-11 rounded-[8px] flex items-center justify-center cursor-default overflow-hidden"
                             style={{ background: "#0A1929", border: "1px solid rgba(255,255,255,0.1)" }}
                           >
-                            <img src={chestOpenedImg} alt="Baú aberto" className="w-10 h-10 object-contain opacity-60" />
+                            <img src={chestOpenedImg} alt="Opened chest" className="w-10 h-10 object-contain opacity-60" />
                           </div>
                         );
                       }
-                      // State 2: Available to open
                       const unopenedIdx = i - opened.length;
                       if (unopenedIdx < unopened.length) {
                         const chest = unopened[unopenedIdx];
@@ -190,11 +185,10 @@ const Chests = () => {
                             className="w-11 h-11 rounded-[8px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 hover:shadow-[0_0_8px_rgba(92,200,232,0.4)] active:scale-95 animate-pulse-glow overflow-hidden"
                             style={{ background: "#1A3A4E", border: "1.5px solid #5CC8E8" }}
                           >
-                            <img src={chestClosedImg} alt="Baú disponível" className="w-10 h-10 object-contain" />
+                            <img src={chestClosedImg} alt="Available chest" className="w-10 h-10 object-contain" />
                           </button>
                         );
                       }
-                      // State 3: Empty slot
                       return (
                         <div
                           key={i}
@@ -208,10 +202,10 @@ const Chests = () => {
                   </div>
                   <span className="text-ocean-muted text-[11px]">
                     {unopened.length > 0
-                      ? `${unopened.length} disponível(is) · ${opened.length} aberto(s) hoje`
+                      ? `${unopened.length} available to open · ${opened.length} opened today`
                       : opened.length > 0
-                        ? "Todos os baús abertos — volte amanhã!"
-                        : "Nenhum baú ainda — acerte previsões para ganhar!"}
+                        ? "All chests opened — come back tomorrow!"
+                        : "No chests yet — hit predictions to earn some!"}
                   </span>
                 </div>
               );
@@ -220,7 +214,6 @@ const Chests = () => {
         </div>
       </main>
 
-      {/* Chest Open Modal */}
       {showModal && modalReward && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4" onClick={closeModal}>
           <div
@@ -236,15 +229,15 @@ const Chests = () => {
 
             {animPhase === "reward" ? (
               <div className="animate-fade-in">
-                <h2 className="text-foreground text-xl font-bold mb-2">Recompensa!</h2>
+                <h2 className="text-foreground text-xl font-bold mb-2">Reward!</h2>
                 <p className="text-pacific text-lg font-bold mb-4">{rewardLabel(modalReward)}</p>
               </div>
             ) : (
-              <h2 className="text-foreground text-xl font-bold mb-2">Abrindo baú...</h2>
+              <h2 className="text-foreground text-xl font-bold mb-2">Opening chest...</h2>
             )}
 
             <button onClick={closeModal} className="w-full h-11 rounded-[12px] bg-pacific text-ocean-dark font-bold text-sm mt-2">
-              Fechar
+              Close
             </button>
           </div>
         </div>

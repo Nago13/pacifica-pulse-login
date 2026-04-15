@@ -27,15 +27,15 @@ const cardStyle = { border: "1px solid rgba(92,200,232,0.15)" };
 
 const LEAGUE_THRESHOLDS: { league: string; min: number; next: number }[] = [
   { league: "Bronze", min: 0, next: 300 },
-  { league: "Prata", min: 300, next: 800 },
-  { league: "Ouro", min: 800, next: 1800 },
-  { league: "Platina", min: 1800, next: 3500 },
-  { league: "Diamante", min: 3500, next: 6000 },
-  { league: "Lendária", min: 6000, next: 99999 },
+  { league: "Silver", min: 300, next: 800 },
+  { league: "Gold", min: 800, next: 1800 },
+  { league: "Platinum", min: 1800, next: 3500 },
+  { league: "Diamond", min: 3500, next: 6000 },
+  { league: "Legendary", min: 6000, next: 99999 },
 ];
 
 const NEXT_LEAGUE: Record<string, string> = {
-  Bronze: "Prata", Prata: "Ouro", Ouro: "Platina", Platina: "Diamante", Diamante: "Lendária", "Lendária": "Lendária",
+  Bronze: "Silver", Silver: "Gold", Gold: "Platinum", Platinum: "Diamond", Diamond: "Legendary", Legendary: "Legendary",
 };
 
 const Profile = () => {
@@ -60,7 +60,6 @@ const Profile = () => {
           setPredictions(data as PredictionRow[]);
         }
 
-        // Get total count
         const { count } = await supabase
           .from("predictions")
           .select("*", { count: "exact", head: true })
@@ -69,7 +68,6 @@ const Profile = () => {
         const total = count ?? 0;
         setTotalPredictions(total);
 
-        // Get hit rate
         if (total > 0) {
           const { count: wins } = await supabase
             .from("predictions")
@@ -91,7 +89,7 @@ const Profile = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const tweetText = encodeURIComponent("🌊 Estou jogando Pacifica Pulse! Preveja cripto e ganhe troféus 🏆\n\nEntre pelo meu link 👇");
+  const tweetText = encodeURIComponent("🌊 I'm playing Pacifica Pulse! Predict crypto and earn trophies 🏆\n\nJoin via my link 👇");
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro_ITA");
 
   const userTrophies = user?.trophies ?? 0;
@@ -101,7 +99,7 @@ const Profile = () => {
   const progressPct = leagueInfo.next > leagueInfo.min
     ? Math.min(100, Math.round(((userTrophies - leagueInfo.min) / (leagueInfo.next - leagueInfo.min)) * 100))
     : 100;
-  const faltam = Math.max(0, leagueInfo.next - userTrophies);
+  const remaining = Math.max(0, leagueInfo.next - userTrophies);
 
   const assetMeta: Record<string, { logo: string }> = {
     BTC: { logo: bitcoinLogo },
@@ -123,9 +121,9 @@ const Profile = () => {
             </div>
             <div className="grid grid-cols-3 gap-3 w-full mt-1">
               {[
-                { label: "Liga", value: userLeague },
-                { label: "Troféus", value: userTrophies.toLocaleString() },
-                { label: "Streak", value: `${userStreak} dias` },
+                { label: "League", value: userLeague },
+                { label: "Trophies", value: userTrophies.toLocaleString() },
+                { label: "Streak", value: `${userStreak} days` },
               ].map((s) => (
                 <div key={s.label} className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-0.5" style={cardStyle}>
                   <span className="text-ocean-muted text-[10px]">{s.label}</span>
@@ -138,25 +136,25 @@ const Profile = () => {
           <div className="rounded-[16px] bg-card-surface p-5" style={{ border: "1px solid rgba(245,166,35,0.3)" }}>
             <div className="flex items-center gap-2 mb-3">
               <Trophy size={20} className="text-warning" />
-              <span className="text-foreground font-bold">Liga {userLeague}</span>
+              <span className="text-foreground font-bold">{userLeague} League</span>
             </div>
             <div className="flex items-center justify-between text-xs text-ocean-muted mb-1.5">
-              <span>{userTrophies.toLocaleString()} troféus</span><span>{leagueInfo.next < 99999 ? leagueInfo.next.toLocaleString() : "MAX"}</span>
+              <span>{userTrophies.toLocaleString()} trophies</span><span>{leagueInfo.next < 99999 ? leagueInfo.next.toLocaleString() : "MAX"}</span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-ocean-dark">
               <div className="h-full rounded-full bg-pacific transition-all" style={{ width: `${progressPct}%` }} />
             </div>
-            {userLeague !== "Lendária" && (
-              <p className="text-ocean-muted text-xs mt-2">Faltam {faltam.toLocaleString()} troféus para subir para {NEXT_LEAGUE[userLeague]}</p>
+            {userLeague !== "Legendary" && (
+              <p className="text-ocean-muted text-xs mt-2">{remaining.toLocaleString()} trophies to reach {NEXT_LEAGUE[userLeague]}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Taxa de acerto", value: totalPredictions > 0 ? `${hitRate}%` : "—", color: "text-success" },
-              { label: "Total de previsões", value: totalPredictions > 0 ? totalPredictions.toString() : "—", color: "text-foreground" },
-              { label: "Melhor streak", value: `${userStreak} dias`, color: "text-warning" },
-              { label: "Ranking global", value: "—", color: "text-pacific" },
+              { label: "Hit rate", value: totalPredictions > 0 ? `${hitRate}%` : "—", color: "text-success" },
+              { label: "Total predictions", value: totalPredictions > 0 ? totalPredictions.toString() : "—", color: "text-foreground" },
+              { label: "Best streak", value: `${userStreak} days`, color: "text-warning" },
+              { label: "Global ranking", value: "—", color: "text-pacific" },
             ].map((s) => (
               <div key={s.label} className="rounded-[16px] bg-card-surface p-4 flex flex-col gap-1" style={cardStyle}>
                 <span className="text-ocean-muted text-xs">{s.label}</span>
@@ -166,34 +164,34 @@ const Profile = () => {
           </div>
 
           <div className="rounded-[16px] bg-card-surface p-5" style={{ border: "1px solid rgba(92,200,232,0.4)" }}>
-            <h3 className="text-foreground font-bold mb-1">Convide amigos e ganhe</h3>
-            <p className="text-ocean-muted text-xs mb-4">Você ganha troféus + % dos ganhos do amigo para sempre</p>
+            <h3 className="text-foreground font-bold mb-1">Invite friends and earn</h3>
+            <p className="text-ocean-muted text-xs mb-4">Earn trophies + % of your friend's earnings forever</p>
             <div className="flex items-center rounded-[8px] bg-ocean-dark px-3 py-2.5 mb-3">
               <span className="text-pacific text-sm truncate flex-1">pacifica.fi/pulse/pedro_ITA</span>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-3">
               <button onClick={handleCopy} className="h-10 rounded-[12px] bg-ocean-button text-foreground text-sm font-medium flex items-center justify-center gap-1.5 transition-all hover:opacity-80">
                 {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
-                {copied ? "Copiado!" : "Copiar link"}
+                {copied ? "Copied!" : "Copy link"}
               </button>
               <a href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`} target="_blank" rel="noopener noreferrer"
                 className="h-10 rounded-[12px] bg-ocean-button text-foreground text-sm font-medium flex items-center justify-center gap-1.5 transition-all hover:opacity-80">
-                <XIcon /> Compartilhar
+                <XIcon /> Share
               </a>
             </div>
           </div>
 
           <div className="rounded-[16px] bg-card-surface p-5" style={cardStyle}>
-            <h3 className="text-foreground font-bold mb-4">Últimas previsões</h3>
+            <h3 className="text-foreground font-bold mb-4">Latest predictions</h3>
             {predictions.length === 0 ? (
-              <p className="text-ocean-muted text-sm text-center py-4">Nenhuma previsão ainda. Jogue para começar!</p>
+              <p className="text-ocean-muted text-sm text-center py-4">No predictions yet. Play to get started!</p>
             ) : (
               <div className="flex flex-col">
                 {predictions.map((p, i) => {
                   const meta = assetMeta[p.asset] ?? { logo: bitcoinLogo };
-                  const dirLabel = p.direction === "up" ? "subiu" : p.direction === "down" ? "caiu" : p.mode;
+                  const dirLabel = p.direction === "up" ? "went up" : p.direction === "down" ? "went down" : p.mode;
                   const date = new Date(p.created_at);
-                  const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                  const dateStr = date.toLocaleDateString("en-US", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
                   return (
                     <div key={i}>
