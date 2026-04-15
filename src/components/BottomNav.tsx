@@ -1,4 +1,4 @@
-import { Home, Package, BarChart3, User } from "lucide-react";
+import { Home, Package, BarChart3, BarChart2, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 
@@ -9,6 +9,7 @@ const BottomNav = () => {
   const navItems = [
     { icon: Home, label: "Home", path: "/play", badge: null },
     { icon: Package, label: "Chests", path: "/chests", badge: pendingBattleChestCount > 0 ? pendingBattleChestCount : null },
+    { icon: BarChart2, label: "Intel", path: "/learn" },
     { icon: BarChart3, label: "Ranking", path: "/leaderboard" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
