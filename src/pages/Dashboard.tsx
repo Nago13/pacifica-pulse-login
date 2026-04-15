@@ -444,6 +444,7 @@ const Dashboard = () => {
             battleChoice={activePrediction?.mode === "batalha" ? activePrediction.direction : null}
             onConfirm={handleBattleConfirm}
             formatTimer={formatTimer}
+            buzzScores={buzzAll}
           />
         ) : (
           <PrecisionMode
@@ -458,6 +459,7 @@ const Dashboard = () => {
             onConfirm={handlePrecisionConfirm}
             formatTimer={formatTimer}
             formatPrice={formatPrice}
+            buzzScore={buzzBTC}
           />
         )}
       </main>
