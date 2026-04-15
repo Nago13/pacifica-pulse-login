@@ -13,7 +13,8 @@ createRoot(document.getElementById("root")!).render(
         accentColor: "#5CC8E8",
       },
       embeddedWallets: {
-        createOnLogin: "users-without-wallets",
+        ethereum: { createOnLogin: "users-without-wallets" },
+        solana: { createOnLogin: "users-without-wallets" },
       },
     }}
   >
