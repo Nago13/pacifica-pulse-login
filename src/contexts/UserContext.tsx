@@ -226,11 +226,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolveClassic = async () => {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
-      const precoFinal = data.bitcoin.usd;
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica?.bitcoin) throw new Error("Pacifica unavailable");
+      const precoFinal = pacifica.bitcoin.mark;
       const variacao = ((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100;
       const acertou = activePrediction!.direction === "up" ? variacao > 0 : variacao < 0;
       const trofeusGanhos = acertou ? 25 : -15;
