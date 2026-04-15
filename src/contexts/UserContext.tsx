@@ -137,6 +137,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resolvingRef = useRef(false);
+  const earnBattleChestRef = useRef<(mode: string) => Promise<boolean>>(async () => false);
 
   const setActivePrediction = useCallback((p: ActivePrediction | null) => {
     setActivePredictionState(p);
@@ -348,6 +349,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       variacao: number; acertou: boolean; trofeusGanhos: number; navState: Record<string, unknown>;
     }) => {
       if (user && user.id !== "local") {
+        console.log('Salvando previsão:', { mode, asset, direction, acertou, trofeusGanhos });
         await supabase.from("predictions").insert({
           user_id: user.id,
           mode,
@@ -377,6 +379,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser((prev) =>
           prev ? { ...prev, trophies: newTrophies, streak: newStreak, league: newLeague } : prev
         );
+
+        // Earn a battle chest on correct prediction
+        if (acertou) {
+          console.log('Salvando baú com mode:', mode);
+          const earned = await earnBattleChestRef.current(mode);
+          console.log('Baú ganho:', earned);
+        }
       }
 
       setActivePredictionState(null);
@@ -583,6 +592,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return false;
     }
   }, [user, countBattleChestsToday, refreshPendingChests]);
+
+  earnBattleChestRef.current = earnBattleChest;
 
   const getBattleChests = useCallback(async (): Promise<BattleChest[]> => {
     if (!user || user.id === "local") return [];

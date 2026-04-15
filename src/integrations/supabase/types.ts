@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      chests: {
+        Row: {
+          created_at: string
+          earned_at: string
+          id: string
+          mode: string | null
+          opened_at: string | null
+          reward_type: string | null
+          reward_value: number | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          earned_at?: string
+          id?: string
+          mode?: string | null
+          opened_at?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          earned_at?: string
+          id?: string
+          mode?: string | null
+          opened_at?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       predictions: {
         Row: {
           asset: string
