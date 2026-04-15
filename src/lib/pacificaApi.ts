@@ -59,12 +59,20 @@ export function formatFundingRate(funding: string): string {
   return `${num > 0 ? "+" : ""}${pct.toFixed(4)}%`;
 }
 
-export function formatOpenInterest(oi: string): string {
+export function formatOpenInterest(oi: string, markPrice?: number): string {
   const num = parseFloat(oi);
   if (isNaN(num)) return "$0";
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `$${(num / 1_000).toFixed(0)}K`;
-  return `$${num.toFixed(0)}`;
+  const value = markPrice ? num * markPrice : num;
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+export function getFundingSentiment(funding: string): { text: string; color: string } {
+  const num = parseFloat(funding);
+  if (Math.abs(num) < 0.0001) return { text: "Mercado equilibrado", color: "#8BB8CC" };
+  if (num > 0) return { text: "Mercado otimista — mais compradores que vendedores na Pacifica", color: "#1DB887" };
+  return { text: "Mercado pessimista — mais vendedores que compradores na Pacifica", color: "#E84855" };
 }
 
 export function getFundingColor(funding: string): string {

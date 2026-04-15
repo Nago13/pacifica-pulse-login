@@ -3,7 +3,7 @@ import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
-import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
+import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
@@ -353,9 +353,13 @@ const Dashboard = () => {
         </TooltipProvider>
         <div className="flex items-center gap-2">
           <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
-          <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(asset.open_interest)}</span>
+          <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(asset.open_interest, asset.mark)}</span>
         </div>
       </div>
+      {(() => {
+        const sentiment = getFundingSentiment(asset.funding);
+        return <p className="text-[11px] mb-4 -mt-2" style={{ color: sentiment.color }}>{sentiment.text}</p>;
+      })()}
     );
   };
 

@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import type { BuzzResult } from "@/lib/elfaApi";
 import type { PacificaAsset } from "@/lib/pacificaApi";
-import { formatFundingRate, formatOpenInterest, getFundingColor } from "@/lib/pacificaApi";
+import { formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment } from "@/lib/pacificaApi";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
@@ -137,9 +137,13 @@ const PrecisionMode = ({
           </TooltipProvider>
           <div className="flex items-center gap-2">
             <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
-            <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(pacificaAsset.open_interest)}</span>
+            <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(pacificaAsset.open_interest, pacificaAsset.mark)}</span>
           </div>
         </div>
+        {(() => {
+          const sentiment = getFundingSentiment(pacificaAsset.funding);
+          return <p className="text-[11px] mb-3" style={{ color: sentiment.color }}>{sentiment.text}</p>;
+        })()}
       )}
 
       {/* Buzz Score */}
