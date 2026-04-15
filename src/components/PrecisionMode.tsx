@@ -4,6 +4,7 @@ import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import type { BuzzResult } from "@/lib/elfaApi";
 import type { PacificaAsset } from "@/lib/pacificaApi";
 import { formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment } from "@/lib/pacificaApi";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
@@ -231,8 +232,8 @@ const PrecisionMode = ({
       {/* Powered by Pacifica */}
       {usingPacifica && (
         <div className="flex items-center justify-center gap-1.5 mt-4">
-          <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
-          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+          <img src={pacificaLogo} alt="Pacifica" className="w-4 h-4 rounded-full shrink-0" />
+          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Powered by Pacifica</span>
         </div>
       )}
     </div>

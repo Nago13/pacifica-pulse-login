@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
 import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
@@ -368,8 +369,8 @@ const Dashboard = () => {
     if (!usingPacifica) return null;
     return (
       <div className="flex items-center justify-center gap-1.5 mt-4">
-        <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
-        <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+        <img src={pacificaLogo} alt="Pacifica" className="w-4 h-4 rounded-full shrink-0" />
+        <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Powered by Pacifica</span>
       </div>
     );
   };

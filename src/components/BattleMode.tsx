@@ -7,6 +7,7 @@ import { formatFundingRate, getFundingColor } from "@/lib/pacificaApi";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
 import solanaLogo from "@/assets/solana-logo.png";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BattleModeProps {
@@ -162,8 +163,8 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
 
         {usingPacifica && (
           <div className="flex items-center justify-center gap-1.5 mt-4">
-            <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
-            <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+            <img src={pacificaLogo} alt="Pacifica" className="w-4 h-4 rounded-full shrink-0" />
+            <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Powered by Pacifica</span>
           </div>
         )}
       </div>
@@ -324,8 +325,8 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
 
       {usingPacifica && (
         <div className="flex items-center justify-center gap-1.5 mt-4">
-          <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
-          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+          <img src={pacificaLogo} alt="Pacifica" className="w-4 h-4 rounded-full shrink-0" />
+          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Powered by Pacifica</span>
         </div>
       )}
     </div>
