@@ -14,6 +14,7 @@ interface BattleModeProps {
   onConfirm: (coinId: string, arenaCoins: string[]) => void;
   formatTimer: (s: number) => string;
   buzzScores: Record<string, BuzzResult>;
+  buzzLastUpdated: Date | null;
 }
 
 const COIN_LIST = [
@@ -40,7 +41,9 @@ const COIN_LIST = [
 const formatPrice = (p: number) =>
   Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores }: BattleModeProps) => {
+const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores, buzzLastUpdated }: BattleModeProps) => {
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [step, setStep] = useState<1 | 2>(1);
   const [arenaSelection, setArenaSelection] = useState<string[]>(["bitcoin", "ethereum", "solana"]);
   const [betChoice, setBetChoice] = useState<string | null>(null);

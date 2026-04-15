@@ -18,6 +18,7 @@ interface PrecisionModeProps {
   formatTimer: (s: number) => string;
   formatPrice: (p: number) => string;
   buzzScore: BuzzResult | null;
+  buzzLastUpdated: Date | null;
 }
 
 const RANGES: {
@@ -49,8 +50,10 @@ const RiskBars = ({ filled, color }: { filled: number; color: string }) => (
 const PrecisionMode = ({
   price, change24h, flashing, apiError,
   precisionActive, precisionCountdown, precisionRange, precisionPrice,
-  onConfirm, formatTimer, formatPrice, buzzScore,
+  onConfirm, formatTimer, formatPrice, buzzScore, buzzLastUpdated,
 }: PrecisionModeProps) => {
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [selected, setSelected] = useState<PrecisionRange | null>(null);
   const timerLow = precisionCountdown < 10 && precisionCountdown > 0;
 
