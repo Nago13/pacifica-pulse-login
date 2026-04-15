@@ -11,11 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url)
-    let ticker = url.searchParams.get('ticker') || ''
+    let ticker = ''
 
-    // Also accept ticker from JSON body
-    if (!ticker && req.method === 'POST') {
+    if (req.method === 'POST') {
       try {
         const body = await req.json()
         ticker = body?.ticker || 'BTC'
@@ -23,7 +21,10 @@ serve(async (req) => {
         ticker = 'BTC'
       }
     }
-    if (!ticker) ticker = 'BTC'
+    if (!ticker) {
+      const url = new URL(req.url)
+      ticker = url.searchParams.get('ticker') || 'BTC'
+    }
 
     const elfaKey = Deno.env.get('ELFA_API_KEY')
     console.log('ELFA_API_KEY present:', !!elfaKey)
@@ -34,18 +35,30 @@ serve(async (req) => {
     )
 
     console.log('Elfa API status:', response.status)
-    const data = await response.json()
+    const rawText = await response.text()
+    console.log('Elfa raw response (first 500):', rawText.substring(0, 500))
 
-    const tokenData = data?.data?.find(
-      (t: any) =>
-        t.token?.toUpperCase() === ticker.toUpperCase() ||
-        t.symbol?.toUpperCase() === ticker.toUpperCase()
+    let data: any
+    try { data = JSON.parse(rawText) } catch { data = null }
+
+    // Structure is { success, data: { total, page, pageSize, data: [...tokens] } }
+    let tokens: any[] = []
+    if (data?.data?.data && Array.isArray(data.data.data)) tokens = data.data.data
+    else if (Array.isArray(data?.data)) tokens = data.data
+    else if (Array.isArray(data)) tokens = data
+
+    console.log('Tokens found:', tokens.length)
+
+    const tokenData = tokens.find(
+      (t: any) => t.token?.toUpperCase() === ticker.toUpperCase()
     )
 
-    const mencoes = tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || 0
+    console.log('Token match for', ticker, ':', tokenData ? JSON.stringify(tokenData) : 'not found')
+
+    const mencoes = tokenData?.current_count || tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || 0
     const buzzScore = Math.min(Math.round(mencoes / 10), 100)
 
-    const getText = (score: number) => {
+    const getLabel = (score: number) => {
       if (score <= 30) return 'Baixa atividade nas redes'
       if (score <= 60) return 'Atividade moderada nas redes'
       if (score <= 80) return 'Alta atividade nas redes'
@@ -57,7 +70,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         score: finalScore,
-        label: getText(finalScore),
+        label: getLabel(finalScore),
         raw: tokenData || null,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
