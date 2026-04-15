@@ -8,10 +8,10 @@ export interface BuzzResult {
 const cache: Record<string, BuzzResult> = {};
 
 function getLabel(score: number): string {
-  if (score <= 30) return "Baixa atividade nas redes";
-  if (score <= 60) return "Atividade moderada nas redes";
-  if (score <= 80) return "Alta atividade nas redes";
-  return "Atividade explosiva nas redes";
+  if (score <= 30) return "Low social activity";
+  if (score <= 60) return "Moderate social activity";
+  if (score <= 80) return "High social activity";
+  return "Explosive social activity";
 }
 
 export async function getBuzzScore(ticker: string): Promise<BuzzResult> {
