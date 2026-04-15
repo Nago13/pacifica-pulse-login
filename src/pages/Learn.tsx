@@ -34,13 +34,13 @@ function formatTime(ts: number): string {
   return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 }
 
-function formatVolume(v: string, markPrice?: number): string {
+function formatVolume(v: string): string {
   const num = parseFloat(v);
   if (isNaN(num)) return "$0";
-  const value = markPrice ? num * markPrice : num;
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  return `$${value.toFixed(0)}`;
+  if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`;
+  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `$${(num / 1_000).toFixed(1)}K`;
+  return `$${num.toFixed(0)}`;
 }
 
 function formatFunding(f: string): string {
@@ -268,14 +268,14 @@ const Learn = () => {
             <div className="bg-card-dark rounded-[10px] p-3">
               <p className="text-[11px] text-ocean-muted mb-1">Open Interest</p>
               <p className="text-base font-semibold text-foreground">
-                {formatVolume(data?.openInterest ?? "0", data?.price)}
+                {formatVolume(data?.openInterest ?? "0")}
               </p>
               <p className="text-[11px] text-ocean-muted mt-1">Total value of open positions on Pacifica</p>
             </div>
             <div className="bg-card-dark rounded-[10px] p-3">
               <p className="text-[11px] text-ocean-muted mb-1">24h Volume</p>
               <p className="text-base font-semibold text-foreground">
-                {formatVolume(data?.volume24h ?? "0", data?.price)}
+                {formatVolume(data?.volume24h ?? "0")}
               </p>
               <p className="text-[11px] text-ocean-muted mt-1">Total traded in the last 24 hours</p>
             </div>
