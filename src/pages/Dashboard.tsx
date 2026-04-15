@@ -335,31 +335,32 @@ const Dashboard = () => {
     if (!asset || !usingPacifica) return null;
     const fundingNum = parseFloat(asset.funding);
     return (
-      <div className="flex items-center gap-4 mb-4">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 cursor-help">
-                <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
-                <span className={`text-[12px] font-bold ${getFundingColor(asset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
-                  {formatFundingRate(asset.funding)}
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
-          <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(asset.open_interest, asset.mark)}</span>
+      <>
+        <div className="flex items-center gap-4 mb-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
+                  <span className={`text-[12px] font-bold ${getFundingColor(asset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
+                    {formatFundingRate(asset.funding)}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
+            <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(asset.open_interest, asset.mark)}</span>
+          </div>
         </div>
-      </div>
-      {(() => {
-        const sentiment = getFundingSentiment(asset.funding);
-        return <p className="text-[11px] mb-4 -mt-2" style={{ color: sentiment.color }}>{sentiment.text}</p>;
-      })()}
+        <p className="text-[11px] mb-4" style={{ color: getFundingSentiment(asset.funding).color }}>
+          {getFundingSentiment(asset.funding).text}
+        </p>
+      </>
     );
   };
 
