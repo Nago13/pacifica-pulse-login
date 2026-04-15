@@ -2,9 +2,12 @@ import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2, Check, ArrowLeft } from "lucide-react";
 import type { CoinPrices } from "@/pages/Dashboard";
 import type { BuzzResult } from "@/lib/elfaApi";
+import type { PacificaPrices } from "@/lib/pacificaApi";
+import { formatFundingRate, getFundingColor } from "@/lib/pacificaApi";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
 import solanaLogo from "@/assets/solana-logo.png";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BattleModeProps {
   coins: CoinPrices;
@@ -15,33 +18,26 @@ interface BattleModeProps {
   formatTimer: (s: number) => string;
   buzzScores: Record<string, BuzzResult>;
   buzzLastUpdated: Date | null;
+  pacificaData: PacificaPrices | null;
+  usingPacifica: boolean;
 }
 
 const COIN_LIST = [
-  {
-    id: "bitcoin",
-    ticker: "BTC",
-    name: "Bitcoin",
-    logo: bitcoinLogo,
-  },
-  {
-    id: "ethereum",
-    ticker: "ETH",
-    name: "Ethereum",
-    logo: ethereumLogo,
-  },
-  {
-    id: "solana",
-    ticker: "SOL",
-    name: "Solana",
-    logo: solanaLogo,
-  },
+  { id: "bitcoin", ticker: "BTC", name: "Bitcoin", logo: bitcoinLogo },
+  { id: "ethereum", ticker: "ETH", name: "Ethereum", logo: ethereumLogo },
+  { id: "solana", ticker: "SOL", name: "Solana", logo: solanaLogo },
 ];
 
 const formatPrice = (p: number) =>
   Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores, buzzLastUpdated }: BattleModeProps) => {
+const PACIFICA_KEY_MAP: Record<string, keyof PacificaPrices> = {
+  bitcoin: "bitcoin",
+  ethereum: "ethereum",
+  solana: "solana",
+};
+
+const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores, buzzLastUpdated, pacificaData, usingPacifica }: BattleModeProps) => {
   const formatBuzzTime = (d: Date) =>
     `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [step, setStep] = useState<1 | 2>(1);
@@ -74,6 +70,30 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
   };
 
   const arenaCoins = COIN_LIST.filter((c) => arenaSelection.includes(c.id));
+
+  const FundingBadge = ({ coinId }: { coinId: string }) => {
+    if (!usingPacifica || !pacificaData) return null;
+    const asset = pacificaData[PACIFICA_KEY_MAP[coinId]];
+    if (!asset) return null;
+    const fundingNum = parseFloat(asset.funding);
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1 cursor-help">
+              <span className="text-[9px]" style={{ color: "#8BB8CC" }}>FR</span>
+              <span className={`text-[9px] font-bold ${getFundingColor(asset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
+                {formatFundingRate(asset.funding)}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">Funding Rate via Pacifica</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   // If battle is active, always show step 2 state
   if (battleActive) {
@@ -114,6 +134,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                         {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                       </span>
                     </div>
+                    <FundingBadge coinId={coin.id} />
                     {buzzScores[coin.ticker] && (
                       <div className="w-full mt-1">
                         <div className="flex items-center justify-between">
@@ -138,6 +159,13 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
             Apostou em {coinIdMap[battleChoice!] ?? ""} — Aguardando resultado...
           </span>
         </div>
+
+        {usingPacifica && (
+          <div className="flex items-center justify-center gap-1.5 mt-4">
+            <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
+            <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -189,6 +217,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                           {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                         </span>
                       </div>
+                      <FundingBadge coinId={coin.id} />
                       {buzzScores[coin.ticker] && (
                         <div className="w-full mt-1">
                           <div className="flex items-center justify-between">
@@ -262,6 +291,7 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                           {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                         </span>
                       </div>
+                      <FundingBadge coinId={coin.id} />
                     </>
                   ) : (
                     <div className="h-4 w-16 rounded bg-ocean-dark animate-pulse" />
@@ -290,6 +320,13 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
             {betChoice ? `Confirmar aposta em ${coinIdMap[betChoice] ?? betChoice.toUpperCase()}` : "Selecione uma moeda"}
           </button>
         </>
+      )}
+
+      {usingPacifica && (
+        <div className="flex items-center justify-center gap-1.5 mt-4">
+          <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
+          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+        </div>
       )}
     </div>
   );

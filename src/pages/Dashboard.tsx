@@ -3,6 +3,7 @@ import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
 import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
+import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
@@ -11,6 +12,7 @@ import BattleMode from "@/components/BattleMode";
 import PrecisionMode from "@/components/PrecisionMode";
 import type { PrecisionRange } from "@/components/PrecisionMode";
 import { useUser } from "@/contexts/UserContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&precision=2";
 const COUNTDOWN_SECONDS = 60;
@@ -47,6 +49,8 @@ const Dashboard = () => {
   const [coins, setCoins] = useState<CoinPrices>({ bitcoin: null, ethereum: null, solana: null });
   const [flashing, setFlashing] = useState(false);
   const [apiError, setApiError] = useState(false);
+  const [usingPacifica, setUsingPacifica] = useState(false);
+  const [pacificaData, setPacificaData] = useState<PacificaPrices | null>(null);
 
   // Chest state
   const [chestAvailable, setChestAvailable] = useState(false);
@@ -146,32 +150,84 @@ const Dashboard = () => {
     }
   };
 
-  const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
+  // CoinGecko fallback
+  const fetchCoinGeckoPrices = useCallback(async (): Promise<CoinPrices | null> => {
     try {
       const res = await fetch(API_URL_MULTI);
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
-      const newCoins: CoinPrices = {
+      return {
         bitcoin: { price: data.bitcoin.usd, change24h: data.bitcoin.usd_24h_change },
         ethereum: { price: data.ethereum.usd, change24h: data.ethereum.usd_24h_change },
         solana: { price: data.solana.usd, change24h: data.solana.usd_24h_change },
       };
-      setCoins(newCoins);
-      setApiError(false);
-      setFlashing(true);
-      setTimeout(() => setFlashing(false), 300);
-      return newCoins;
     } catch {
-      setApiError(true);
       return null;
     }
   }, []);
+
+  // Primary: Pacifica, fallback: CoinGecko
+  const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
+    try {
+      const pacifica = await fetchPacificaPrices();
+      if (pacifica && pacifica.bitcoin) {
+        const newCoins: CoinPrices = {
+          bitcoin: pacifica.bitcoin ? { price: pacifica.bitcoin.mark, change24h: coins.bitcoin?.change24h ?? 0 } : null,
+          ethereum: pacifica.ethereum ? { price: pacifica.ethereum.mark, change24h: coins.ethereum?.change24h ?? 0 } : null,
+          solana: pacifica.solana ? { price: pacifica.solana.mark, change24h: coins.solana?.change24h ?? 0 } : null,
+        };
+        setCoins(newCoins);
+        setPacificaData(pacifica);
+        setUsingPacifica(true);
+        setApiError(false);
+        setFlashing(true);
+        setTimeout(() => setFlashing(false), 300);
+        return newCoins;
+      }
+      throw new Error("Pacifica unavailable");
+    } catch {
+      // Fallback to CoinGecko
+      try {
+        const gecko = await fetchCoinGeckoPrices();
+        if (gecko) {
+          setCoins(gecko);
+          setPacificaData(null);
+          setUsingPacifica(false);
+          setApiError(false);
+          setFlashing(true);
+          setTimeout(() => setFlashing(false), 300);
+          return gecko;
+        }
+        throw new Error("CoinGecko also failed");
+      } catch {
+        setApiError(true);
+        return null;
+      }
+    }
+  }, [fetchCoinGeckoPrices]);
+
+  // Also fetch 24h change from CoinGecko in background (Pacifica doesn't provide it)
+  useEffect(() => {
+    const fetch24h = async () => {
+      const gecko = await fetchCoinGeckoPrices();
+      if (gecko) {
+        setCoins(prev => ({
+          bitcoin: prev.bitcoin ? { ...prev.bitcoin, change24h: gecko.bitcoin?.change24h ?? prev.bitcoin.change24h } : prev.bitcoin,
+          ethereum: prev.ethereum ? { ...prev.ethereum, change24h: gecko.ethereum?.change24h ?? prev.ethereum.change24h } : prev.ethereum,
+          solana: prev.solana ? { ...prev.solana, change24h: gecko.solana?.change24h ?? prev.solana.change24h } : prev.solana,
+        }));
+      }
+    };
+    fetch24h();
+    const interval = setInterval(fetch24h, 60000);
+    return () => clearInterval(interval);
+  }, [fetchCoinGeckoPrices]);
 
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(() => {
       if (!anyPredictionActive) fetchPrices();
-    }, 30000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [fetchPrices, anyPredictionActive]);
 
@@ -186,6 +242,7 @@ const Dashboard = () => {
 
   const price = coins.bitcoin?.price ?? null;
   const change24h = coins.bitcoin?.change24h ?? null;
+  const btcPacifica = pacificaData?.bitcoin ?? null;
 
   // ── Classic ──
   const handlePress = (dir: "up" | "down") => {
@@ -271,6 +328,45 @@ const Dashboard = () => {
     if (activePrediction.mode === "batalha") return "Batalha";
     if (activePrediction.mode === "precisao") return "Precisão";
     return "";
+  };
+
+  // Funding Rate + OI component for classic mode
+  const PacificaIndicators = ({ asset }: { asset: PacificaAsset | null }) => {
+    if (!asset || !usingPacifica) return null;
+    const fundingNum = parseFloat(asset.funding);
+    return (
+      <div className="flex items-center gap-4 mb-4">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2 cursor-help">
+                <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
+                <span className={`text-[12px] font-bold ${getFundingColor(asset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
+                  {formatFundingRate(asset.funding)}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
+          <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(asset.open_interest)}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const PoweredByPacifica = () => {
+    if (!usingPacifica) return null;
+    return (
+      <div className="flex items-center justify-center gap-1.5 mt-4">
+        <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
+        <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
+      </div>
+    );
   };
 
   const OceanBubbles = () => (
@@ -367,7 +463,7 @@ const Dashboard = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1 mb-5">
+              <div className="flex items-center gap-1 mb-4">
                 {change24h === null ? (
                   <div className="h-4 w-20 rounded bg-ocean-dark animate-pulse" />
                 ) : (
@@ -380,6 +476,10 @@ const Dashboard = () => {
                   </>
                 )}
               </div>
+
+              {/* Pacifica Funding Rate + Open Interest */}
+              <PacificaIndicators asset={btcPacifica} />
+
               <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -434,6 +534,8 @@ const Dashboard = () => {
                   </span>
                 </div>
               )}
+
+              <PoweredByPacifica />
             </div>
 
             <div className="w-full max-w-lg grid grid-cols-3 gap-3">
@@ -459,6 +561,8 @@ const Dashboard = () => {
             formatTimer={formatTimer}
             buzzScores={buzzAll}
             buzzLastUpdated={buzzBattleLastUpdated}
+            pacificaData={pacificaData}
+            usingPacifica={usingPacifica}
           />
         ) : (
           <PrecisionMode
@@ -475,6 +579,8 @@ const Dashboard = () => {
             formatPrice={formatPrice}
             buzzScore={buzzBTC}
             buzzLastUpdated={buzzLastUpdated}
+            pacificaAsset={btcPacifica}
+            usingPacifica={usingPacifica}
           />
         )}
       </main>
