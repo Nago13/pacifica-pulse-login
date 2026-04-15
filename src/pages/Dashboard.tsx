@@ -74,7 +74,12 @@ const Dashboard = () => {
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
   const buzzInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch BTC buzz score on mount + every 5 min
+  // Ping Elfa API on mount to verify key
+  useEffect(() => {
+    pingElfa();
+  }, []);
+
+  // Fetch BTC buzz score on mount + every 1 min
   useEffect(() => {
     const fetchBuzz = async () => {
       const result = await getBuzzScore("BTC");
