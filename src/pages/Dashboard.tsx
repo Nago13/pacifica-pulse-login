@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import pacificaLogo from "@/assets/pacifica-logo.png";
-import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
+import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift, RotateCw } from "lucide-react";
 import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
 import { fetchPacificaPrices, formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment, type PacificaPrices, type PacificaAsset } from "@/lib/pacificaApi";
 import { supabase } from "@/lib/supabase";
@@ -74,6 +74,9 @@ const Dashboard = () => {
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
   const [buzzLastUpdated, setBuzzLastUpdated] = useState<Date | null>(null);
   const [buzzBattleLastUpdated, setBuzzBattleLastUpdated] = useState<Date | null>(null);
+  const [priceLastUpdated, setPriceLastUpdated] = useState<Date | null>(null);
+  const [priceAgoText, setPriceAgoText] = useState("just now");
+  const [refreshSpin, setRefreshSpin] = useState(false);
 
   useEffect(() => {
     const fetchBuzz = async () => {
@@ -152,7 +155,10 @@ const Dashboard = () => {
       setUsingPacifica(true);
       setApiError(false);
       setFlashing(true);
-      setTimeout(() => setFlashing(false), 300);
+      setPriceLastUpdated(new Date());
+      setPriceAgoText("just now");
+      setRefreshSpin(true);
+      setTimeout(() => { setFlashing(false); setRefreshSpin(false); }, 300);
       return newCoins;
     }
     setApiError(true);
@@ -166,6 +172,17 @@ const Dashboard = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [fetchPrices, anyPredictionActive]);
+
+  // Update "ago" text every second
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!priceLastUpdated) return;
+      const s = Math.floor((Date.now() - priceLastUpdated.getTime()) / 1000);
+      if (s < 2) setPriceAgoText("just now");
+      else setPriceAgoText(`${s}s ago`);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [priceLastUpdated]);
 
   const formatTimer = useCallback((s: number) => {
     const m = Math.floor(s / 60);
