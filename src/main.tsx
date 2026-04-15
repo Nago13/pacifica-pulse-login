@@ -7,10 +7,12 @@ createRoot(document.getElementById("root")!).render(
   <PrivyProvider
     appId="cmo0l6m37001k0ckylqmtr3do"
     config={{
-      loginMethods: ["google", "email"],
+      loginMethods: ["email", "google"],
       appearance: {
         theme: "dark",
         accentColor: "#5CC8E8",
+        loginMessage: "Sign in to Pacifica Pulse",
+        showWalletLoginFirst: false,
       },
       embeddedWallets: {
         ethereum: { createOnLogin: "off" },
