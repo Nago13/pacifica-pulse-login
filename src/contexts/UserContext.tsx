@@ -225,7 +225,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const resolveClassic = async () => {
       const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
       );
       const data = await res.json();
       const precoFinal = data.bitcoin.usd;
@@ -257,7 +257,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const arenaIds = activePrediction!.assetsArena ?? [];
       const coinIds = arenaIds.join(",");
       const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd`
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd&precision=2`
       );
       const data = await res.json();
       const pricesInitial = activePrediction!.pricesInitial ?? {};
@@ -301,7 +301,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const resolvePrecision = async () => {
       const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
       );
       const data = await res.json();
       const precoFinal = data.bitcoin.usd;
