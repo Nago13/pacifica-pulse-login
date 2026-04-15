@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import type { BuzzResult } from "@/lib/elfaApi";
 import type { PacificaAsset } from "@/lib/pacificaApi";
-import { formatFundingRate, formatOpenInterest, getFundingColor } from "@/lib/pacificaApi";
+import { formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment } from "@/lib/pacificaApi";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
@@ -119,27 +119,32 @@ const PrecisionMode = ({
 
       {/* Pacifica Funding Rate + Open Interest */}
       {pacificaAsset && usingPacifica && (
-        <div className="flex items-center gap-4 mb-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 cursor-help">
-                  <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
-                  <span className={`text-[12px] font-bold ${getFundingColor(pacificaAsset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
-                    {formatFundingRate(pacificaAsset.funding)}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
-            <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(pacificaAsset.open_interest)}</span>
+        <>
+          <div className="flex items-center gap-4 mb-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-help">
+                    <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
+                    <span className={`text-[12px] font-bold ${getFundingColor(pacificaAsset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
+                      {formatFundingRate(pacificaAsset.funding)}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
+              <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(pacificaAsset.open_interest, pacificaAsset.mark)}</span>
+            </div>
           </div>
-        </div>
+          <p className="text-[11px] mb-3" style={{ color: getFundingSentiment(pacificaAsset.funding).color }}>
+            {getFundingSentiment(pacificaAsset.funding).text}
+          </p>
+        </>
       )}
 
       {/* Buzz Score */}
