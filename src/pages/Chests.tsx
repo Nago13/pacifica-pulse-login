@@ -88,8 +88,15 @@ const Chests = () => {
     setAnimPhase("closed");
   };
 
+  const MODE_ALIASES: Record<string, string[]> = {
+    classico: ["classico", "Clássico", "classic", "classsico"],
+    batalha: ["batalha", "Batalha", "battle"],
+    precisao: ["precisao", "Precisão", "precision"],
+  };
+
   const getModeCounts = (mode: string) => {
-    const modeChests = battleChests.filter(c => c.mode === mode);
+    const aliases = MODE_ALIASES[mode] ?? [mode];
+    const modeChests = battleChests.filter(c => aliases.includes(c.mode));
     const opened = modeChests.filter(c => !!c.opened_at);
     const unopened = modeChests.filter(c => !c.opened_at);
     return { opened, unopened };
