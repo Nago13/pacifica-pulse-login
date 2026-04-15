@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
-import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
+import { getBuzzScore, pingElfa, type BuzzResult } from "@/lib/elfaApi";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
