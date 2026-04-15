@@ -36,7 +36,7 @@ const COIN_LIST = [
 ];
 
 const formatPrice = (p: number) =>
-  p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer }: BattleModeProps) => {
   const [step, setStep] = useState<1 | 2>(1);

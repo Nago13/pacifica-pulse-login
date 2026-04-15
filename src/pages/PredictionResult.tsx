@@ -513,7 +513,7 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
   const borderColor = acertou ? "border-success" : "border-danger";
   const particleColor = acertou ? "hsl(160,74%,42%)" : "hsl(355,79%,59%)";
 
-  const formatP = (p: number) => p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatP = (p: number) => Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const tweetText = encodeURIComponent(
     acertou
