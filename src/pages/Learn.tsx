@@ -4,6 +4,7 @@ import { BarChart2, Sparkles, Quote, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
+import LiveTradesFeed from "@/components/LiveTradesFeed";
 
 const COINS = ["BTC", "ETH", "SOL"] as const;
 const INTERVALS = ["1m", "5m", "15m", "1h", "4h"] as const;
@@ -19,6 +20,7 @@ interface MarketData {
   volume24h: string;
   candles: { t: number; close: number }[];
   mentions: { text: string; likes: number; author: string }[];
+  trades: any[];
 }
 
 function formatPrice(p: number): string {
@@ -244,8 +246,11 @@ const Learn = () => {
             </div>
           ) : (
             <p className="text-ocean-muted text-center text-sm py-4">No social signals available right now</p>
-          )}
+        )}
         </div>
+
+        {/* Live Trades Feed */}
+        <LiveTradesFeed trades={data?.trades ?? []} />
 
         {/* Market Context */}
         <div className="mb-5">
