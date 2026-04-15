@@ -72,22 +72,25 @@ const Dashboard = () => {
   // Buzz Score state
   const [buzzBTC, setBuzzBTC] = useState<BuzzResult | null>(null);
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
-  const buzzInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [buzzLastUpdated, setBuzzLastUpdated] = useState<Date | null>(null);
+  const [buzzBattleLastUpdated, setBuzzBattleLastUpdated] = useState<Date | null>(null);
 
-  // Edge function proxy handles all Elfa calls now
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
-  // Fetch BTC buzz score on mount + every 1 min
+  // Fetch BTC buzz score on mount + every 5 min
   useEffect(() => {
     const fetchBuzz = async () => {
       const result = await getBuzzScore("BTC");
       setBuzzBTC(result);
+      setBuzzLastUpdated(new Date());
     };
     fetchBuzz();
-    buzzInterval.current = setInterval(fetchBuzz, 60 * 1000);
-    return () => { if (buzzInterval.current) clearInterval(buzzInterval.current); };
+    const interval = setInterval(fetchBuzz, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Fetch all buzz scores for battle mode
+  // Fetch all buzz scores for battle mode + every 5 min
   useEffect(() => {
     if (gameMode !== "battle") return;
     const fetchAll = async () => {
@@ -97,8 +100,11 @@ const Dashboard = () => {
         getBuzzScore("SOL"),
       ]);
       setBuzzAll({ BTC: btc, ETH: eth, SOL: sol });
+      setBuzzBattleLastUpdated(new Date());
     };
     fetchAll();
+    const interval = setInterval(fetchAll, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [gameMode]);
 
   // Check chest availability
