@@ -55,7 +55,7 @@ serve(async (req) => {
 
     console.log('Token match for', ticker, ':', tokenData ? JSON.stringify(tokenData) : 'not found')
 
-    const mencoes = tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || tokenData?.mention_count || 0
+    const mencoes = tokenData?.current_count || tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || 0
     const buzzScore = Math.min(Math.round(mencoes / 10), 100)
 
     const getLabel = (score: number) => {
