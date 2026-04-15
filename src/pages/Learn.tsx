@@ -268,14 +268,14 @@ const Learn = () => {
             <div className="bg-card-dark rounded-[10px] p-3">
               <p className="text-[11px] text-ocean-muted mb-1">Open Interest</p>
               <p className="text-base font-semibold text-foreground">
-                {formatVolume(data?.openInterest ?? "0", data?.price)}
+                {formatVolume(data?.openInterest ?? "0")}
               </p>
               <p className="text-[11px] text-ocean-muted mt-1">Total value of open positions on Pacifica</p>
             </div>
             <div className="bg-card-dark rounded-[10px] p-3">
               <p className="text-[11px] text-ocean-muted mb-1">24h Volume</p>
               <p className="text-base font-semibold text-foreground">
-                {formatVolume(data?.volume24h ?? "0", data?.price)}
+                {formatVolume(data?.volume24h ?? "0")}
               </p>
               <p className="text-[11px] text-ocean-muted mt-1">Total traded in the last 24 hours</p>
             </div>
