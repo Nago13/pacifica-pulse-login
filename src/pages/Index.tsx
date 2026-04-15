@@ -1,11 +1,20 @@
+import { useEffect } from "react";
 import { Trophy, Flame, TrendingUp, Waves } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 
 const weekData = [60, 85, 45, 90, 70, 95, 80];
 const days = ["M", "T", "W", "T", "F", "S", "S"];
 
 const Index = () => {
   const navigate = useNavigate();
+  const { login, authenticated, ready } = usePrivy();
+
+  useEffect(() => {
+    if (ready && authenticated) {
+      navigate("/play");
+    }
+  }, [ready, authenticated, navigate]);
 
   return (
     <div className="flex min-h-screen font-dm-sans">
@@ -54,7 +63,7 @@ const Index = () => {
           </div>
           <p className="text-ocean-muted text-base animate-stagger-2">Predict. Compete. Win.</p>
           <button
-            onClick={() => navigate("/play")}
+            onClick={() => login()}
             className="animate-stagger-3 w-full flex items-center justify-center gap-3 bg-ocean-button border border-pacific rounded-[12px] px-6 py-4 text-foreground font-medium transition-all duration-200 hover:bg-pacific hover:text-ocean-dark"
           >
             <svg width="20" height="20" viewBox="0 0 48 48">

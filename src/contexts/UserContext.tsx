@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase";
 import { fetchPacificaPrices } from "@/lib/pacificaApi";
 
@@ -11,6 +12,8 @@ export interface UserData {
   league: string;
   last_played: string | null;
   created_at: string;
+  privy_id?: string;
+  email?: string;
 }
 
 interface ChestReward {
@@ -35,10 +38,8 @@ export interface ActivePrediction {
   priceInitial: number;
   startedAt: number;
   durationSeconds: number;
-  // Battle-specific
   assetsArena?: string[];
   pricesInitial?: Record<string, number>;
-  // Precision-specific (direction holds the range like "0.5-2")
   precisionReward?: number;
 }
 
@@ -130,6 +131,7 @@ const ACTIVE_PREDICTION_KEY = "activePrediction";
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const { user: privyUser, authenticated, ready } = usePrivy();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingBattleChestCount, setPendingBattleChestCount] = useState(0);
@@ -348,7 +350,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       variacao: number; acertou: boolean; trofeusGanhos: number; navState: Record<string, unknown>;
     }) => {
       if (user && user.id !== "local") {
-        console.log('Salvando previsão:', { mode, asset, direction, acertou, trofeusGanhos });
         await supabase.from("predictions").insert({
           user_id: user.id,
           mode,
@@ -379,11 +380,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           prev ? { ...prev, trophies: newTrophies, streak: newStreak, league: newLeague } : prev
         );
 
-        // Earn a battle chest on correct prediction
         if (acertou) {
-          console.log('Salvando baú com mode:', mode);
-          const earned = await earnBattleChestRef.current(mode);
-          console.log('Baú ganho:', earned);
+          await earnBattleChestRef.current(mode);
         }
       }
 
@@ -396,13 +394,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
     resolve();
   }, [timeRemaining, activePrediction, user, navigate]);
 
-  // ── User fetch/create ──
+  // ── User fetch/create via Privy ID ──
   const fetchOrCreateUser = useCallback(async () => {
+    if (!ready) return;
+    
+    if (!authenticated || !privyUser) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    const privyId = privyUser.id;
+    const userName =
+      (privyUser.google?.name) ||
+      (privyUser.email?.address?.split("@")[0]) ||
+      "Trader";
+    const userEmail =
+      privyUser.email?.address ||
+      privyUser.google?.email ||
+      "";
+
     try {
       const { data, error } = await supabase
         .from("users")
         .select("*")
-        .eq("username", "Pedro")
+        .eq("privy_id", privyId)
         .maybeSingle();
 
       if (error) throw error;
@@ -412,7 +428,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         const { data: newUser, error: insertError } = await supabase
           .from("users")
-          .insert({ username: "Pedro", trophies: 0, streak: 0, league: "Bronze" })
+          .insert({
+            privy_id: privyId,
+            username: userName,
+            email: userEmail,
+            trophies: 0,
+            streak: 0,
+            league: "Bronze",
+          })
           .select()
           .single();
 
@@ -421,28 +444,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error("Supabase user fetch error:", err);
-      setUser({ id: "local", username: "Pedro", trophies: 847, streak: 5, league: "Ouro", last_played: null, created_at: "" });
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ready, authenticated, privyUser]);
 
   useEffect(() => {
     fetchOrCreateUser();
   }, [fetchOrCreateUser]);
 
   const refreshUser = useCallback(async () => {
+    if (!user || !user.privy_id) return;
     try {
       const { data } = await supabase
         .from("users")
         .select("*")
-        .eq("username", "Pedro")
+        .eq("privy_id", user.privy_id)
         .maybeSingle();
       if (data) setUser(data as UserData);
     } catch (err) {
       console.error("Refresh user error:", err);
     }
-  }, []);
+  }, [user]);
 
   const savePrediction = useCallback(async (input: PredictionInput) => {
     if (!user || user.id === "local") return;

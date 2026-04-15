@@ -111,27 +111,33 @@ export type Database = {
       users: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           last_played: string | null
           league: string
+          privy_id: string | null
           streak: number
           trophies: number
           username: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           last_played?: string | null
           league?: string
+          privy_id?: string | null
           streak?: number
           trophies?: number
           username: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           last_played?: string | null
           league?: string
+          privy_id?: string | null
           streak?: number
           trophies?: number
           username?: string

@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserProvider } from "@/contexts/UserContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import PredictionResult from "./pages/PredictionResult.tsx";
@@ -24,12 +25,12 @@ const App = () => (
         <UserProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/play" element={<Dashboard />} />
-            <Route path="/result" element={<PredictionResult />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/chests" element={<Chests />} />
-            <Route path="/learn" element={<Learn />} />
+            <Route path="/play" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/result" element={<ProtectedRoute><PredictionResult /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/chests" element={<ProtectedRoute><Chests /></ProtectedRoute>} />
+            <Route path="/learn" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </UserProvider>

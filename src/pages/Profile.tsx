@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Trophy, Flame, Copy, Check, ArrowUp, ArrowDown } from "lucide-react";
+import { Trophy, Flame, Copy, Check, ArrowUp, ArrowDown, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
@@ -41,9 +43,20 @@ const NEXT_LEAGUE: Record<string, string> = {
 const Profile = () => {
   const [copied, setCopied] = useState(false);
   const { user } = useUser();
+  const { user: privyUser, logout } = usePrivy();
+  const navigate = useNavigate();
   const [predictions, setPredictions] = useState<PredictionRow[]>([]);
   const [totalPredictions, setTotalPredictions] = useState(0);
   const [hitRate, setHitRate] = useState(0);
+
+  const userName =
+    privyUser?.google?.name ||
+    privyUser?.email?.address?.split("@")[0] ||
+    user?.username ||
+    "Trader";
+
+  const userHandle = userName.toLowerCase().replace(/\s+/g, "_");
+  const initials = userName.slice(0, 2).toUpperCase();
 
   useEffect(() => {
     if (!user || user.id === "local") return;
@@ -84,13 +97,18 @@ const Profile = () => {
   }, [user]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText("https://pacifica.fi/pulse/pedro_ITA");
+    navigator.clipboard.writeText(`https://pacifica.fi/pulse/${userHandle}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
   const tweetText = encodeURIComponent("🌊 I'm playing Pacifica Pulse! Predict crypto and earn trophies 🏆\n\nJoin via my link 👇");
-  const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro_ITA");
+  const tweetUrl = encodeURIComponent(`https://pacifica.fi/pulse/${userHandle}`);
 
   const userTrophies = user?.trophies ?? 0;
   const userStreak = user?.streak ?? 0;
@@ -112,12 +130,12 @@ const Profile = () => {
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
         <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-ocean-button flex items-center justify-center text-foreground font-bold text-xl border-2 border-pacific">
-              {(user?.username ?? "PE").slice(0, 2).toUpperCase()}
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-foreground font-bold text-xl" style={{ background: "#1A3A4E", border: "2px solid #5CC8E8" }}>
+              {initials}
             </div>
             <div className="text-center">
-              <h1 className="text-foreground text-2xl font-bold">{user?.username ?? "Pedro"}</h1>
-              <p className="text-ocean-muted text-sm">@{(user?.username ?? "pedro").toLowerCase()}_ITA</p>
+              <h1 className="text-foreground text-2xl font-bold">{userName}</h1>
+              <p className="text-ocean-muted text-sm">@{userHandle}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 w-full mt-1">
               {[
@@ -167,7 +185,7 @@ const Profile = () => {
             <h3 className="text-foreground font-bold mb-1">Invite friends and earn</h3>
             <p className="text-ocean-muted text-xs mb-4">Earn trophies + % of your friend's earnings forever</p>
             <div className="flex items-center rounded-[8px] bg-ocean-dark px-3 py-2.5 mb-3">
-              <span className="text-pacific text-sm truncate flex-1">pacifica.fi/pulse/pedro_ITA</span>
+              <span className="text-pacific text-sm truncate flex-1">pacifica.fi/pulse/{userHandle}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-3">
               <button onClick={handleCopy} className="h-10 rounded-[12px] bg-ocean-button text-foreground text-sm font-medium flex items-center justify-center gap-1.5 transition-all hover:opacity-80">
@@ -220,6 +238,16 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Sign Out */}
+          <button
+            onClick={handleLogout}
+            className="w-full h-12 rounded-[12px] bg-transparent text-ocean-muted text-sm font-medium flex items-center justify-center gap-2 transition-all hover:opacity-80"
+            style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+          >
+            <LogOut size={16} />
+            Sign Out
+          </button>
         </div>
       </main>
       <BottomNav />
