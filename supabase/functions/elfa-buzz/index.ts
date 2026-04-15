@@ -35,11 +35,16 @@ serve(async (req) => {
 
     console.log('Elfa API status:', response.status)
     const data = await response.json()
-
-    const tokenData = data?.data?.find(
+    console.log('Elfa API response keys:', JSON.stringify(Object.keys(data || {})))
+    
+    // Handle various response structures
+    const tokens = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : Array.isArray(data?.tokens) ? data.tokens : []
+    
+    const tokenData = tokens.find(
       (t: any) =>
         t.token?.toUpperCase() === ticker.toUpperCase() ||
-        t.symbol?.toUpperCase() === ticker.toUpperCase()
+        t.symbol?.toUpperCase() === ticker.toUpperCase() ||
+        t.ticker?.toUpperCase() === ticker.toUpperCase()
     )
 
     const mencoes = tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || 0
