@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      predictions: {
+        Row: {
+          asset: string
+          created_at: string
+          direction: string | null
+          id: string
+          mode: string
+          price_final: number | null
+          price_initial: number | null
+          result: boolean
+          trophies_delta: number
+          user_id: string
+          variation_real: number | null
+        }
+        Insert: {
+          asset: string
+          created_at?: string
+          direction?: string | null
+          id?: string
+          mode: string
+          price_final?: number | null
+          price_initial?: number | null
+          result?: boolean
+          trophies_delta?: number
+          user_id: string
+          variation_real?: number | null
+        }
+        Update: {
+          asset?: string
+          created_at?: string
+          direction?: string | null
+          id?: string
+          mode?: string
+          price_final?: number | null
+          price_initial?: number | null
+          result?: boolean
+          trophies_delta?: number
+          user_id?: string
+          variation_real?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          id: string
+          last_played: string | null
+          league: string
+          streak: number
+          trophies: number
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_played?: string | null
+          league?: string
+          streak?: number
+          trophies?: number
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_played?: string | null
+          league?: string
+          streak?: number
+          trophies?: number
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
