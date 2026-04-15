@@ -41,28 +41,19 @@ serve(async (req) => {
     let data: any
     try { data = JSON.parse(rawText) } catch { data = null }
 
-    // Try multiple structures
+    // Structure is { success, data: { total, page, pageSize, data: [...tokens] } }
     let tokens: any[] = []
-    if (Array.isArray(data)) tokens = data
-    else if (data?.data && Array.isArray(data.data)) tokens = data.data
-    else if (data?.tokens && Array.isArray(data.tokens)) tokens = data.tokens
-    else if (data?.data?.tokens && Array.isArray(data.data.tokens)) tokens = data.data.tokens
+    if (data?.data?.data && Array.isArray(data.data.data)) tokens = data.data.data
+    else if (Array.isArray(data?.data)) tokens = data.data
+    else if (Array.isArray(data)) tokens = data
 
     console.log('Tokens found:', tokens.length)
-    if (tokens.length > 0) {
-      console.log('First token keys:', JSON.stringify(Object.keys(tokens[0])))
-      console.log('First token sample:', JSON.stringify(tokens[0]).substring(0, 300))
-    }
 
     const tokenData = tokens.find(
-      (t: any) =>
-        t.token?.toUpperCase() === ticker.toUpperCase() ||
-        t.symbol?.toUpperCase() === ticker.toUpperCase() ||
-        t.ticker?.toUpperCase() === ticker.toUpperCase() ||
-        t.name?.toUpperCase() === ticker.toUpperCase()
+      (t: any) => t.token?.toUpperCase() === ticker.toUpperCase()
     )
 
-    console.log('Token match for', ticker, ':', tokenData ? 'found' : 'not found')
+    console.log('Token match for', ticker, ':', tokenData ? JSON.stringify(tokenData) : 'not found')
 
     const mencoes = tokenData?.mentions || tokenData?.count || tokenData?.mentionCount || tokenData?.mention_count || 0
     const buzzScore = Math.min(Math.round(mencoes / 10), 100)
