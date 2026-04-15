@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
@@ -72,22 +72,25 @@ const Dashboard = () => {
   // Buzz Score state
   const [buzzBTC, setBuzzBTC] = useState<BuzzResult | null>(null);
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
-  const buzzInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [buzzLastUpdated, setBuzzLastUpdated] = useState<Date | null>(null);
+  const [buzzBattleLastUpdated, setBuzzBattleLastUpdated] = useState<Date | null>(null);
 
-  // Edge function proxy handles all Elfa calls now
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
-  // Fetch BTC buzz score on mount + every 1 min
+  // Fetch BTC buzz score on mount + every 5 min
   useEffect(() => {
     const fetchBuzz = async () => {
       const result = await getBuzzScore("BTC");
       setBuzzBTC(result);
+      setBuzzLastUpdated(new Date());
     };
     fetchBuzz();
-    buzzInterval.current = setInterval(fetchBuzz, 60 * 1000);
-    return () => { if (buzzInterval.current) clearInterval(buzzInterval.current); };
+    const interval = setInterval(fetchBuzz, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Fetch all buzz scores for battle mode
+  // Fetch all buzz scores for battle mode + every 5 min
   useEffect(() => {
     if (gameMode !== "battle") return;
     const fetchAll = async () => {
@@ -97,8 +100,11 @@ const Dashboard = () => {
         getBuzzScore("SOL"),
       ]);
       setBuzzAll({ BTC: btc, ETH: eth, SOL: sol });
+      setBuzzBattleLastUpdated(new Date());
     };
     fetchAll();
+    const interval = setInterval(fetchAll, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [gameMode]);
 
   // Check chest availability
@@ -390,7 +396,12 @@ const Dashboard = () => {
                 {buzzBTC === null ? (
                   <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
                 ) : (
-                  <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
+                  <>
+                    <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
+                    {buzzLastUpdated && (
+                      <p className="text-[10px] mt-0.5" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -447,6 +458,7 @@ const Dashboard = () => {
             onConfirm={handleBattleConfirm}
             formatTimer={formatTimer}
             buzzScores={buzzAll}
+            buzzLastUpdated={buzzBattleLastUpdated}
           />
         ) : (
           <PrecisionMode
@@ -462,6 +474,7 @@ const Dashboard = () => {
             formatTimer={formatTimer}
             formatPrice={formatPrice}
             buzzScore={buzzBTC}
+            buzzLastUpdated={buzzLastUpdated}
           />
         )}
       </main>

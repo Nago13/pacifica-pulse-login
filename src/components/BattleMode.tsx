@@ -14,6 +14,7 @@ interface BattleModeProps {
   onConfirm: (coinId: string, arenaCoins: string[]) => void;
   formatTimer: (s: number) => string;
   buzzScores: Record<string, BuzzResult>;
+  buzzLastUpdated: Date | null;
 }
 
 const COIN_LIST = [
@@ -40,7 +41,9 @@ const COIN_LIST = [
 const formatPrice = (p: number) =>
   Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores }: BattleModeProps) => {
+const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConfirm, formatTimer, buzzScores, buzzLastUpdated }: BattleModeProps) => {
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [step, setStep] = useState<1 | 2>(1);
   const [arenaSelection, setArenaSelection] = useState<string[]>(["bitcoin", "ethereum", "solana"]);
   const [betChoice, setBetChoice] = useState<string | null>(null);
@@ -205,6 +208,9 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
               );
             })}
           </div>
+          {buzzLastUpdated && (
+            <p className="text-[10px] mt-2 text-center" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
+          )}
 
           {selectionError && (
             <p className="text-danger text-xs text-center mb-3">Selecione pelo menos 2 moedas</p>

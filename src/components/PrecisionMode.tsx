@@ -18,6 +18,7 @@ interface PrecisionModeProps {
   formatTimer: (s: number) => string;
   formatPrice: (p: number) => string;
   buzzScore: BuzzResult | null;
+  buzzLastUpdated: Date | null;
 }
 
 const RANGES: {
@@ -49,8 +50,10 @@ const RiskBars = ({ filled, color }: { filled: number; color: string }) => (
 const PrecisionMode = ({
   price, change24h, flashing, apiError,
   precisionActive, precisionCountdown, precisionRange, precisionPrice,
-  onConfirm, formatTimer, formatPrice, buzzScore,
+  onConfirm, formatTimer, formatPrice, buzzScore, buzzLastUpdated,
 }: PrecisionModeProps) => {
+  const formatBuzzTime = (d: Date) =>
+    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const [selected, setSelected] = useState<PrecisionRange | null>(null);
   const timerLow = precisionCountdown < 10 && precisionCountdown > 0;
 
@@ -122,7 +125,12 @@ const PrecisionMode = ({
         {buzzScore === null ? (
           <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
         ) : (
-          <p className="text-ocean-muted text-[11px] mt-1.5">{buzzScore.label}</p>
+          <>
+            <p className="text-ocean-muted text-[11px] mt-1.5">{buzzScore.label}</p>
+            {buzzLastUpdated && (
+              <p className="text-[10px] mt-0.5" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
+            )}
+          </>
         )}
       </div>
 
