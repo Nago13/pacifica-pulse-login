@@ -411,6 +411,8 @@ const Dashboard = () => {
                     <span className={`text-foreground text-5xl font-bold transition-colors duration-300 ${flashing ? "animate-price-flash" : ""}`}>
                       ${formatPrice(price)}
                     </span>
+                    <span className="font-bold rounded" style={{ fontSize: 9, color: "#5CC8E8", background: "rgba(92,200,232,0.15)", padding: "2px 6px", borderRadius: 4 }} title="Mark price from Pacifica DEX orderbook">MARK</span>
+                    <RotateCw size={12} className="text-ocean-muted" style={refreshSpin ? { animation: "markRefreshSpin 0.3s linear" } : undefined} />
                     {apiError && <span className="w-2 h-2 rounded-full bg-danger shrink-0" title="No update" />}
                   </div>
                 )}
