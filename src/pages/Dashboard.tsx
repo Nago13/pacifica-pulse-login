@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
+import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
@@ -67,6 +68,36 @@ const Dashboard = () => {
   const [acertosHoje, setAcertosHoje] = useState<string>("—");
   const [taxaAcerto, setTaxaAcerto] = useState<string>("—");
   const [ranking, setRanking] = useState<string>("—");
+
+  // Buzz Score state
+  const [buzzBTC, setBuzzBTC] = useState<BuzzResult | null>(null);
+  const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
+  const buzzInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch BTC buzz score on mount + every 5 min
+  useEffect(() => {
+    const fetchBuzz = async () => {
+      const result = await getBuzzScore("BTC");
+      setBuzzBTC(result);
+    };
+    fetchBuzz();
+    buzzInterval.current = setInterval(fetchBuzz, 5 * 60 * 1000);
+    return () => { if (buzzInterval.current) clearInterval(buzzInterval.current); };
+  }, []);
+
+  // Fetch all buzz scores for battle mode
+  useEffect(() => {
+    if (gameMode !== "battle") return;
+    const fetchAll = async () => {
+      const [btc, eth, sol] = await Promise.all([
+        getBuzzScore("BTC"),
+        getBuzzScore("ETH"),
+        getBuzzScore("SOL"),
+      ]);
+      setBuzzAll({ BTC: btc, ETH: eth, SOL: sol });
+    };
+    fetchAll();
+  }, [gameMode]);
 
   // Check chest availability
   useEffect(() => {
@@ -345,12 +376,20 @@ const Dashboard = () => {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-ocean-muted text-xs">Buzz Score</span>
-                  <span className="text-pacific text-xs font-bold">72/100</span>
+                  {buzzBTC === null ? (
+                    <div className="h-4 w-12 rounded bg-ocean-dark animate-pulse" />
+                  ) : (
+                    <span className="text-pacific text-xs font-bold">{buzzBTC.score}/100</span>
+                  )}
                 </div>
                 <div className="w-full h-2 rounded-full bg-ocean-dark">
-                  <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: "72%" }} />
+                  <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzBTC?.score ?? 0}%` }} />
                 </div>
-                <p className="text-ocean-muted text-[11px] mt-1.5">Alta atividade nas redes</p>
+                {buzzBTC === null ? (
+                  <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
+                ) : (
+                  <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
