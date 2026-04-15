@@ -74,35 +74,35 @@ interface PredictionInput {
 const UserContext = createContext<UserContextValue | null>(null);
 
 function calcLeague(trophies: number): string {
-  if (trophies >= 6000) return "Lendária";
-  if (trophies >= 3500) return "Diamante";
-  if (trophies >= 1800) return "Platina";
-  if (trophies >= 800) return "Ouro";
-  if (trophies >= 300) return "Prata";
+  if (trophies >= 6000) return "Legendary";
+  if (trophies >= 3500) return "Diamond";
+  if (trophies >= 1800) return "Platinum";
+  if (trophies >= 800) return "Gold";
+  if (trophies >= 300) return "Silver";
   return "Bronze";
 }
 
 const BATTLE_REWARDS: Record<string, ChestReward[]> = {
   classico: [
-    { tipo: "trofeus", valor: 10, label: "+10 troféus bônus" },
-    { tipo: "trofeus", valor: 20, label: "+20 troféus bônus" },
-    { tipo: "moedas", valor: 150, label: "150 moedas" },
-    { tipo: "escudo", valor: 1, label: "Escudo de streak" },
-    { tipo: "xp_boost", valor: 2, label: "Boost de XP 2×" },
+    { tipo: "trofeus", valor: 10, label: "+10 bonus trophies" },
+    { tipo: "trofeus", valor: 20, label: "+20 bonus trophies" },
+    { tipo: "moedas", valor: 150, label: "150 bonus coins" },
+    { tipo: "escudo", valor: 1, label: "Streak shield" },
+    { tipo: "xp_boost", valor: 2, label: "XP Boost 2×" },
   ],
   batalha: [
-    { tipo: "trofeus", valor: 20, label: "+20 troféus bônus" },
-    { tipo: "trofeus", valor: 40, label: "+40 troféus bônus" },
-    { tipo: "moedas", valor: 300, label: "300 moedas" },
-    { tipo: "escudo", valor: 2, label: "Escudo de streak ×2" },
-    { tipo: "xp_boost", valor: 3, label: "Boost de XP 3×" },
+    { tipo: "trofeus", valor: 20, label: "+20 bonus trophies" },
+    { tipo: "trofeus", valor: 40, label: "+40 bonus trophies" },
+    { tipo: "moedas", valor: 300, label: "300 bonus coins" },
+    { tipo: "escudo", valor: 2, label: "Streak shield ×2" },
+    { tipo: "xp_boost", valor: 3, label: "XP Boost 3×" },
   ],
   precisao: [
-    { tipo: "trofeus", valor: 30, label: "+30 troféus bônus" },
-    { tipo: "trofeus", valor: 60, label: "+60 troféus bônus" },
-    { tipo: "moedas", valor: 500, label: "500 moedas" },
-    { tipo: "escudo", valor: 3, label: "Escudo de streak ×3" },
-    { tipo: "raro", valor: 1, label: "Drop raro!" },
+    { tipo: "trofeus", valor: 30, label: "+30 bonus trophies" },
+    { tipo: "trofeus", valor: 60, label: "+60 bonus trophies" },
+    { tipo: "moedas", valor: 500, label: "500 bonus coins" },
+    { tipo: "escudo", valor: 3, label: "Streak shield ×3" },
+    { tipo: "raro", valor: 1, label: "Rare drop!" },
   ],
 };
 

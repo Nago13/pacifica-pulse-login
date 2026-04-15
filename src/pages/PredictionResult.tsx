@@ -98,7 +98,7 @@ const COIN_META: Record<string, { name: string; logo: string }> = {
   SOL: { name: "Solana", logo: solanaLogo },
 };
 
-const MODE_LABELS: Record<string, string> = { classico: "Clássico", batalha: "Batalha", precisao: "Precisão" };
+const MODE_LABELS: Record<string, string> = { classico: "Classic", batalha: "Battle", precisao: "Precision" };
 
 const ResultModal = ({ acertou, chestEarned, chestSlotsFull, noChestEarned, bausRestantes, mode, navigate, trophies, showModal, onClose }: {
   acertou: boolean; chestEarned: boolean; chestSlotsFull: boolean; noChestEarned: boolean; bausRestantes: number; mode: string; navigate: ReturnType<typeof useNavigate>; trophies: number; showModal: boolean; onClose: () => void;
@@ -122,28 +122,28 @@ const ResultModal = ({ acertou, chestEarned, chestSlotsFull, noChestEarned, baus
             <div className="flex justify-center mb-4">
               <Package size={48} style={{ color: "#5CC8E8", animation: "chestPulse 1s ease-in-out infinite" }} />
             </div>
-            <h2 className="text-foreground font-bold text-[22px] mb-2">Previsão correta!</h2>
-            <p className="font-bold text-[18px] mb-4" style={{ color: "#1DB887" }}>+{trophies} troféus</p>
+            <h2 className="text-foreground font-bold text-[22px] mb-2">Correct prediction!</h2>
+            <p className="font-bold text-[18px] mb-4" style={{ color: "#1DB887" }}>+{trophies} trophies</p>
             <div className="w-full h-px mb-4" style={{ background: "rgba(255,255,255,0.08)" }} />
             {(chestEarned || chestSlotsFull) && (
               <>
-                <p className="text-foreground font-bold text-[15px] mb-1">Baú de Batalha desbloqueado!</p>
+                <p className="text-foreground font-bold text-[15px] mb-1">Battle Chest unlocked!</p>
                 {bausRestantes > 0 ? (
                   <p className="text-[12px] mb-4" style={{ color: "#8BB8CC" }}>
-                    Você pode ganhar mais {bausRestantes} baú(s) no modo {modeLabel} hoje
+                    You can earn {bausRestantes} more chest(s) in {modeLabel} mode today
                   </p>
                 ) : (
                   <p className="text-[12px] mb-4" style={{ color: "#F5A623" }}>
-                    Slots cheios por hoje!
+                    Slots full for today!
                   </p>
                 )}
               </>
             )}
             {noChestEarned && (
               <>
-                <p className="text-foreground font-bold text-[15px] mb-1">Baú de Batalha desbloqueado!</p>
+                <p className="text-foreground font-bold text-[15px] mb-1">Battle Chest unlocked!</p>
                 <p className="text-[12px] mb-4" style={{ color: "#F5A623" }}>
-                  Slots cheios por hoje!
+                  Slots full for today!
                 </p>
               </>
             )}
@@ -153,14 +153,14 @@ const ResultModal = ({ acertou, chestEarned, chestSlotsFull, noChestEarned, baus
               className="w-full h-11 rounded-[12px] font-bold text-sm mb-3 transition-all hover:opacity-80"
               style={{ background: "#5CC8E8", color: "#0D1B2A" }}
             >
-              Ver meus baús →
+              View my chests →
             </button>
             <button
               onClick={onClose}
               className="w-full h-11 rounded-[12px] font-bold text-sm text-foreground transition-all hover:opacity-80"
               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
             >
-              Continuar jogando
+              Keep playing
             </button>
           </>
         ) : (
@@ -168,21 +168,21 @@ const ResultModal = ({ acertou, chestEarned, chestSlotsFull, noChestEarned, baus
             <div className="flex justify-center mb-4">
               <X size={48} style={{ color: "#E84855" }} />
             </div>
-            <h2 className="text-foreground font-bold text-[22px] mb-2">Quase lá!</h2>
-            <p className="font-bold text-[18px] mb-6" style={{ color: "#E84855" }}>-15 troféus</p>
+            <h2 className="text-foreground font-bold text-[22px] mb-2">Almost there!</h2>
+            <p className="font-bold text-[18px] mb-6" style={{ color: "#E84855" }}>-15 trophies</p>
             <button
               onClick={() => { onClose(); navigate("/play"); }}
               className="w-full h-11 rounded-[12px] font-bold text-sm text-foreground mb-3 transition-all hover:opacity-80"
               style={{ background: "#E84855" }}
             >
-              Tentar novamente
+              Try again
             </button>
             <button
               onClick={() => { onClose(); navigate("/leaderboard"); }}
               className="w-full h-11 rounded-[12px] font-bold text-sm text-foreground transition-all hover:opacity-80"
               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
             >
-              Ver leaderboard
+              View leaderboard
             </button>
           </>
         )}
@@ -286,9 +286,9 @@ const PredictionResult = () => {
   const hasMultiplier = acertou && streak > 3;
   const finalTrophies = hasMultiplier ? Math.round(baseTrophies * 1.5) : baseTrophies;
 
-  const dirLabel = direcao === "up" ? "subiu" : "caiu";
+  const dirLabel = direcao === "up" ? "went up" : "went down";
   const actualMovement = state
-    ? ((state as ClassicResultState).precoFinal >= (state as ClassicResultState).precoInicial ? "subiu" : "caiu")
+    ? ((state as ClassicResultState).precoFinal >= (state as ClassicResultState).precoInicial ? "went up" : "went down")
     : dirLabel;
 
   const borderColor = acertou ? "border-success" : "border-danger";
@@ -296,8 +296,8 @@ const PredictionResult = () => {
 
   const tweetText = encodeURIComponent(
     acertou
-      ? `🏆 Acertei minha previsão no Pacifica Pulse! ${ativo} ${actualMovement} ${variacao}% 📈\n\n🔥 Streak: ${streak} dias | Liga ${user?.league ?? "—"} | ${user?.trophies ?? 0} troféus\n\nTente também 👇`
-      : `📊 Errei dessa vez no Pacifica Pulse, mas sigo firme!\n\nTente também 👇`
+      ? `🏆 Nailed my prediction on Pacifica Pulse! ${ativo} ${actualMovement} ${variacao}% 📈\n\n🔥 Streak: ${streak} days | ${user?.league ?? "—"} League | ${user?.trophies ?? 0} trophies\n\nTry it too 👇`
+      : `📊 Wrong this time on Pacifica Pulse, but still going!\n\nTry it too 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
 
@@ -319,27 +319,27 @@ const PredictionResult = () => {
         </div>
 
         <h1 className="text-foreground text-[32px] font-bold text-center mb-1">
-          {acertou ? "Acertou!" : "Errou dessa vez"}
+          {acertou ? "You got it!" : "Wrong this time"}
         </h1>
         <p className="text-ocean-muted text-center text-sm mb-6">
-          {ativo} {actualMovement} {variacao}% em 1 minuto
+          {ativo} {actualMovement} {variacao}% in 1 minute
         </p>
 
         <div className="text-center mb-5">
           <CountUp target={finalTrophies} prefix={acertou ? "+" : "−"} className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
-          <p className="text-ocean-muted text-xs mt-1">troféus</p>
+          <p className="text-ocean-muted text-xs mt-1">trophies</p>
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-2">
           <Flame size={18} className={acertou ? "text-warning" : "text-ocean-muted"} />
           <span className="text-foreground text-sm font-medium">
-            {acertou ? `Streak: ${streak + 1} dias` : "Streak zerado"}
+            {acertou ? `Streak: ${streak + 1} days` : "Streak reset"}
           </span>
         </div>
 
         {hasMultiplier && (
           <p className="text-success text-xs text-center mb-6">
-            Multiplicador 1.5× aplicado → +{finalTrophies} troféus
+            1.5× multiplier applied → +{finalTrophies} trophies
           </p>
         )}
         {(!acertou || !hasMultiplier) && <div className="mb-6" />}
@@ -349,11 +349,11 @@ const PredictionResult = () => {
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
           <div className="flex items-center gap-2 mb-2">
             <Trophy size={14} className="text-pacific" />
-            <span className="text-foreground text-xs font-bold">Liga {user?.league ?? "—"}</span>
-            <span className="text-ocean-muted text-[10px] ml-auto">{user?.trophies?.toLocaleString() ?? "—"} troféus</span>
+            <span className="text-foreground text-xs font-bold">{user?.league ?? "—"} League</span>
+            <span className="text-ocean-muted text-[10px] ml-auto">{user?.trophies?.toLocaleString() ?? "—"} trophies</span>
           </div>
           <p className="text-foreground text-sm font-medium mb-1">
-            {acertou ? `✅ Acertei! ${ativo} ${variacao}%` : `📊 Errei, mas sigo firme!`}
+            {acertou ? `✅ Nailed it! ${ativo} ${variacao}%` : `📊 Wrong, but still going!`}
           </p>
           <p className="text-pacific text-[10px] mt-1">pacifica.fi/pulse/pedro</p>
         </div>
@@ -366,15 +366,15 @@ const PredictionResult = () => {
           className="w-full h-12 rounded-[12px] flex items-center justify-center gap-2 text-foreground font-medium text-sm transition-all duration-200 hover:opacity-80 mb-3"
           style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.2)" }}
         >
-          <XIcon /> Postar no X e ganhar +30 troféus
+          <XIcon /> Post on X and earn +30 trophies
         </a>
 
         <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
-          <BarChart3 size={16} /> Ver leaderboard
+          <BarChart3 size={16} /> View leaderboard
         </button>
 
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
-          <RotateCcw size={16} /> Jogar novamente
+          <RotateCcw size={16} /> Play again
         </button>
       </div>
     </div>
@@ -399,8 +399,8 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
   const varSummary = variations.map((v) => `${v.ticker}: ${v.variacao}`).join(" | ");
   const tweetText = encodeURIComponent(
     acertou
-      ? `🏆 Acertei no modo Batalha do Pacifica Pulse! ${moedaEscolhida} foi a campeã! 🪙\n\n${varSummary}\n\nTente também 👇`
-      : `📊 Errei no modo Batalha, a campeã foi ${moedaVencedora}!\n\n${varSummary}\n\nTente também 👇`
+      ? `🏆 Nailed it in Battle mode on Pacifica Pulse! ${moedaEscolhida} was the winner! 🪙\n\n${varSummary}\n\nTry it too 👇`
+      : `📊 Wrong in Battle mode, the winner was ${moedaVencedora}!\n\n${varSummary}\n\nTry it too 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
 
@@ -422,12 +422,12 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
         </div>
 
         <h1 className="text-foreground text-[28px] font-bold text-center mb-1">
-          {acertou ? "Você acertou!" : "Dessa vez não..."}
+          {acertou ? "You got it!" : "Not this time..."}
         </h1>
         <p className="text-ocean-muted text-center text-sm mb-6">
           {acertou
-            ? `${moedaEscolhida} foi a campeã!`
-            : `A campeã foi ${moedaVencedora}`}
+            ? `${moedaEscolhida} was the winner!`
+            : `The winner was ${moedaVencedora}`}
         </p>
 
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5 space-y-3" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
@@ -450,10 +450,10 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
                     <span className="text-foreground text-sm font-bold">{meta.name}</span>
                     <span className="text-ocean-muted text-[11px]">{v.ticker}</span>
                     {isChosen && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-pacific/20 text-pacific ml-auto">SUA APOSTA</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-pacific/20 text-pacific ml-auto">YOUR BET</span>
                     )}
                     {isWinner && !isChosen && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/20 text-success ml-auto">CAMPEÃ</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/20 text-success ml-auto">WINNER</span>
                     )}
                   </div>
                 </div>
@@ -470,7 +470,7 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
 
         <div className="text-center mb-5">
           <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
-          <p className="text-ocean-muted text-xs mt-1">troféus</p>
+          <p className="text-ocean-muted text-xs mt-1">trophies</p>
         </div>
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
@@ -483,15 +483,15 @@ const BattleResult = ({ state, navigate, user, streak, modalProps }: { state: Ba
           className="w-full h-12 rounded-[12px] flex items-center justify-center gap-2 text-foreground font-medium text-sm transition-all duration-200 hover:opacity-80 mb-3"
           style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.2)" }}
         >
-          <XIcon /> Postar no X e ganhar +30 troféus
+          <XIcon /> Post on X and earn +30 trophies
         </a>
 
         <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
-          <BarChart3 size={16} /> Ver leaderboard
+          <BarChart3 size={16} /> View leaderboard
         </button>
 
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
-          <RotateCcw size={16} /> Jogar novamente
+          <RotateCcw size={16} /> Play again
         </button>
       </div>
     </div>
@@ -517,8 +517,8 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
 
   const tweetText = encodeURIComponent(
     acertou
-      ? `🎯 Precisão perfeita no Pacifica Pulse! Variação de ${variacaoReal}% — dentro da faixa ${RANGE_LABELS[faixaEscolhida]}!\n\n+${retorno} troféus 🏆\n\nTente também 👇`
-      : `📊 Quase lá no modo Precisão! Variação de ${variacaoReal}%\n\nTente também 👇`
+      ? `🎯 Perfect precision on Pacifica Pulse! Variation of ${variacaoReal}% — within the ${RANGE_LABELS[faixaEscolhida]} range!\n\n+${retorno} trophies 🏆\n\nTry it too 👇`
+      : `📊 Almost there in Precision mode! Variation of ${variacaoReal}%\n\nTry it too 👇`
   );
   const tweetUrl = encodeURIComponent("https://pacifica.fi/pulse/pedro");
 
@@ -540,28 +540,28 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
         </div>
 
         <h1 className="text-foreground text-[28px] font-bold text-center mb-1">
-          {acertou ? "Precisão perfeita!" : "Quase lá..."}
+          {acertou ? "Perfect precision!" : "Almost there..."}
         </h1>
         <p className="text-ocean-muted text-center text-sm mb-6">
           {acertou
-            ? `A variação foi ${variacaoReal}% — dentro da sua faixa!`
-            : `A variação foi ${variacaoReal}% — fora da sua faixa`}
+            ? `The variation was ${variacaoReal}% — within your range!`
+            : `The variation was ${variacaoReal}% — outside your range`}
         </p>
 
         <div className="rounded-[12px] bg-ocean-dark p-4 mb-5" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
           <div className="flex items-center justify-between gap-2">
             <div className="text-center flex-1">
-              <span className="text-ocean-muted text-[10px] block mb-1">Preço inicial</span>
+              <span className="text-ocean-muted text-[10px] block mb-1">Entry price</span>
               <span className="text-foreground text-sm font-bold">${formatP(precoInicial)}</span>
             </div>
             <ArrowRight size={16} className={acertou ? "text-success shrink-0" : "text-danger shrink-0"} />
             <div className="text-center flex-1">
-              <span className="text-ocean-muted text-[10px] block mb-1">Preço final</span>
+              <span className="text-ocean-muted text-[10px] block mb-1">Final price</span>
               <span className="text-foreground text-sm font-bold">${formatP(precoFinal)}</span>
             </div>
             <ArrowRight size={16} className={acertou ? "text-success shrink-0" : "text-danger shrink-0"} />
             <div className="text-center flex-1">
-              <span className="text-ocean-muted text-[10px] block mb-1">Variação</span>
+              <span className="text-ocean-muted text-[10px] block mb-1">Variation</span>
               <span className={`text-sm font-bold ${acertou ? "text-success" : "text-danger"}`}>
                 {precoFinal >= precoInicial ? "+" : "-"}{variacaoReal}%
               </span>
@@ -571,7 +571,7 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
 
         <div className={`rounded-[10px] p-3 mb-2 flex items-center justify-between ${acertou ? "border-2 border-success bg-success/10" : "border-2 border-danger bg-danger/10"}`}>
           <span className="text-foreground text-sm font-medium">
-            Sua aposta: {RANGE_LABELS[faixaEscolhida] ?? faixaEscolhida}
+            Your bet: {RANGE_LABELS[faixaEscolhida] ?? faixaEscolhida}
           </span>
           <span className={`font-bold text-sm ${acertou ? "text-success" : "text-danger"}`}>
             {acertou ? "✓" : "✗"}
@@ -580,14 +580,14 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
 
         {!acertou && faixaReal && (
           <p className="text-ocean-muted text-xs text-center mb-4">
-            A variação real ficou em: {RANGE_LABELS[faixaReal] ?? faixaReal}
+            The actual variation was: {RANGE_LABELS[faixaReal] ?? faixaReal}
           </p>
         )}
         {acertou && <div className="mb-4" />}
 
         <div className="text-center mb-5">
           <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
-          <p className="text-ocean-muted text-xs mt-1">troféus</p>
+          <p className="text-ocean-muted text-xs mt-1">trophies</p>
         </div>
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
@@ -600,15 +600,15 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
           className="w-full h-12 rounded-[12px] flex items-center justify-center gap-2 text-foreground font-medium text-sm transition-all duration-200 hover:opacity-80 mb-3"
           style={{ background: "#1A1A2E", border: "1px solid rgba(255,255,255,0.2)" }}
         >
-          <XIcon /> Postar no X e ganhar +30 troféus
+          <XIcon /> Post on X and earn +30 trophies
         </a>
 
         <button onClick={() => navigate("/leaderboard")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-ocean-muted font-medium text-sm transition-all duration-200 hover:text-foreground border border-ocean-muted/30 mb-3">
-          <BarChart3 size={16} /> Ver leaderboard
+          <BarChart3 size={16} /> View leaderboard
         </button>
 
         <button onClick={() => navigate("/play")} className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-pacific font-medium text-sm transition-all duration-200 hover:opacity-80 border border-pacific/30">
-          <RotateCcw size={16} /> Jogar novamente
+          <RotateCcw size={16} /> Play again
         </button>
       </div>
     </div>
