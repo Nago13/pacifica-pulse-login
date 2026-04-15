@@ -7,10 +7,10 @@ const BottomNav = () => {
   const { pendingBattleChestCount, activePrediction, timeRemaining } = useUser();
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/play", badge: pendingBattleChestCount > 0 ? null : null },
-    { icon: Package, label: "Baús", path: "/chests", badge: pendingBattleChestCount > 0 ? pendingBattleChestCount : null },
+    { icon: Home, label: "Home", path: "/play", badge: null },
+    { icon: Package, label: "Chests", path: "/chests", badge: pendingBattleChestCount > 0 ? pendingBattleChestCount : null },
     { icon: BarChart3, label: "Ranking", path: "/leaderboard" },
-    { icon: User, label: "Perfil", path: "/profile" },
+    { icon: User, label: "Profile", path: "/profile" },
   ];
 
   return (

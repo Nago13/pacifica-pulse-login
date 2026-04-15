@@ -11,25 +11,25 @@ interface GameModeSelectorProps {
 const modes = [
   {
     id: "classic" as GameMode,
-    name: "Clássico",
-    description: "Sobe ou cai em 60 segundos",
-    badge: "MAIS JOGADO",
+    name: "Classic",
+    description: "Up or down in 60 seconds",
+    badge: "MOST PLAYED",
     badgeColor: "bg-[#1D9E75] text-white",
     icon: ArrowUpDown,
   },
   {
     id: "battle" as GameMode,
-    name: "Batalha",
-    description: "Qual moeda valoriza mais?",
+    name: "Battle",
+    description: "Which coin gains more?",
     badge: "HOT",
     badgeColor: "bg-danger text-white",
     icon: Circle,
   },
   {
     id: "precision" as GameMode,
-    name: "Precisão",
-    description: "Acerte o tamanho da variação",
-    badge: "MAIOR GANHO",
+    name: "Precision",
+    description: "Predict the variation size",
+    badge: "BIGGEST WIN",
     badgeColor: "bg-warning text-ocean-dark",
     icon: Target,
   },
@@ -39,7 +39,7 @@ const GameModeSelector = ({ selected, onSelect, disabled }: GameModeSelectorProp
   return (
     <div className="w-full max-w-lg">
       <span className="text-ocean-muted text-xs uppercase tracking-wider font-medium mb-3 block">
-        Modo de jogo
+        Game Mode
       </span>
       <div className="grid grid-cols-3 gap-3">
         {modes.map((mode) => {

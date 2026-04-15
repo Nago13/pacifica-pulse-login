@@ -4,16 +4,16 @@ import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
 
-const tabs = ["Global", "Amigos", "Semanal"];
-const leagues = ["Todos", "Bronze", "Prata", "Ouro", "Platina", "Diamante", "Lendária"];
+const tabs = ["Global", "Friends", "Weekly"];
+const leagues = ["All", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Legendary"];
 
 const leagueBadgeColors: Record<string, string> = {
   Bronze: "bg-[#CD7F32]/20 text-[#CD7F32]",
-  Prata: "bg-[#A8B2BB]/20 text-[#A8B2BB]",
-  Ouro: "bg-warning/20 text-warning",
-  Platina: "bg-pacific/20 text-pacific",
-  Diamante: "bg-[#B9F2FF]/20 text-[#B9F2FF]",
-  "Lendária": "bg-danger/20 text-danger",
+  Silver: "bg-[#A8B2BB]/20 text-[#A8B2BB]",
+  Gold: "bg-warning/20 text-warning",
+  Platinum: "bg-pacific/20 text-pacific",
+  Diamond: "bg-[#B9F2FF]/20 text-[#B9F2FF]",
+  Legendary: "bg-danger/20 text-danger",
 };
 
 const medalColors = ["text-warning", "text-[#A8B2BB]", "text-[#CD7F32]"];
@@ -29,30 +29,29 @@ interface Player {
 
 const cardBorder = { border: "1px solid rgba(92,200,232,0.15)" };
 
-// Fallback data
 const fallbackTop: Player[] = [
-  { rank: 1, name: "CryptoKing", initials: "CK", league: "Lendária", streak: 32, trophies: 4210 },
-  { rank: 2, name: "SolanaWhale", initials: "SW", league: "Diamante", streak: 21, trophies: 3890 },
-  { rank: 3, name: "BitHunter", initials: "BH", league: "Diamante", streak: 18, trophies: 3650 },
+  { rank: 1, name: "CryptoKing", initials: "CK", league: "Legendary", streak: 32, trophies: 4210 },
+  { rank: 2, name: "SolanaWhale", initials: "SW", league: "Diamond", streak: 21, trophies: 3890 },
+  { rank: 3, name: "BitHunter", initials: "BH", league: "Diamond", streak: 18, trophies: 3650 },
 ];
 const fallbackOthers: Player[] = Array.from({ length: 17 }, (_, i) => ({
   rank: i + 4,
   name: ["MoonShot", "DeFiPro", "HODLer", "AltMaster", "ChartWiz", "TokenAce", "BlockPro", "HashKing", "SwapGuru", "YieldMax", "StakePro", "GasLow", "APYking", "LPfarmer", "BullRun", "BearTrap", "PumpIt"][i],
   initials: ["MS", "DP", "HL", "AM", "CW", "TA", "BP", "HK", "SG", "YM", "SP", "GL", "AK", "LF", "BR", "BT", "PI"][i],
-  league: ["Platina", "Platina", "Ouro", "Ouro", "Ouro", "Ouro", "Prata", "Prata", "Prata", "Prata", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze"][i],
+  league: ["Platinum", "Platinum", "Gold", "Gold", "Gold", "Gold", "Silver", "Silver", "Silver", "Silver", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze", "Bronze"][i],
   streak: Math.floor(Math.random() * 15) + 1,
   trophies: 3500 - i * 140 + Math.floor(Math.random() * 50),
 }));
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState("Global");
-  const [activeLeague, setActiveLeague] = useState("Todos");
+  const [activeLeague, setActiveLeague] = useState("All");
   const { user } = useUser();
 
   const [topPlayers, setTopPlayers] = useState<Player[]>(fallbackTop);
   const [otherPlayers, setOtherPlayers] = useState<Player[]>(fallbackOthers);
   const [currentUserRank, setCurrentUserRank] = useState<Player>({
-    rank: 142, name: "Pedro", initials: "PE", league: "Ouro", streak: 5, trophies: 847,
+    rank: 142, name: "Pedro", initials: "PE", league: "Gold", streak: 5, trophies: 847,
   });
 
   useEffect(() => {
@@ -80,7 +79,6 @@ const Leaderboard = () => {
           setOtherPlayers(players.slice(3));
         }
 
-        // Find current user rank
         if (user) {
           const idx = players.findIndex((p) => p.name === user.username);
           if (idx >= 0) {
@@ -149,7 +147,7 @@ const Leaderboard = () => {
                       : "linear-gradient(180deg, rgba(205,127,50,0.2) 0%, rgba(15,34,53,1) 100%)",
                   }}>
                   <span className={`text-lg font-bold ${medalColors[i === 1 ? 0 : i === 0 ? 1 : 2]}`}>
-                    {i === 1 ? "1º" : i === 0 ? "2º" : "3º"}
+                    {i === 1 ? "1st" : i === 0 ? "2nd" : "3rd"}
                   </span>
                 </div>
               </div>
@@ -157,7 +155,7 @@ const Leaderboard = () => {
           </div>
 
           <div className="rounded-[12px] bg-ocean-button p-3 flex items-center gap-3" style={{ border: "1px solid hsl(195,74%,64%)" }}>
-            <div className="flex flex-col"><span className="text-ocean-muted text-[11px]">Sua posição</span></div>
+            <div className="flex flex-col"><span className="text-ocean-muted text-[11px]">Your position</span></div>
             <span className="text-pacific text-xl font-bold">#{currentUserRank.rank}</span>
             <div className="w-8 h-8 rounded-full bg-ocean-dark flex items-center justify-center text-foreground text-xs font-bold border border-pacific/30">{currentUserRank.initials}</div>
             <span className="text-foreground text-sm font-medium">{currentUserRank.name}</span>

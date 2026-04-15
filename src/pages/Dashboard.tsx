@@ -30,11 +30,11 @@ export type CoinPrices = {
 
 const leagueBadgeColors: Record<string, string> = {
   Bronze: "bg-[#CD7F32] text-ocean-dark",
-  Prata: "bg-[#A8B2BB] text-ocean-dark",
-  Ouro: "bg-warning text-ocean-dark",
-  Platina: "bg-pacific text-ocean-dark",
-  Diamante: "bg-[#B9F2FF] text-ocean-dark",
-  "Lendária": "bg-danger text-foreground",
+  Silver: "bg-[#A8B2BB] text-ocean-dark",
+  Gold: "bg-warning text-ocean-dark",
+  Platinum: "bg-pacific text-ocean-dark",
+  Diamond: "bg-[#B9F2FF] text-ocean-dark",
+  Legendary: "bg-danger text-foreground",
 };
 
 const COIN_ID_MAP: Record<string, string> = {
@@ -52,14 +52,12 @@ const Dashboard = () => {
   const [usingPacifica, setUsingPacifica] = useState(false);
   const [pacificaData, setPacificaData] = useState<PacificaPrices | null>(null);
 
-  // Chest state
   const [chestAvailable, setChestAvailable] = useState(false);
   const [chestReward, setChestReward] = useState<{ tipo: string; valor: number } | null>(null);
   const [showChestModal, setShowChestModal] = useState(false);
 
   const [gameMode, setGameMode] = useState<GameMode>("classic");
 
-  // Derive active states from global context
   const anyPredictionActive = activePrediction !== null;
   const predictionActive = activePrediction?.mode === "classico";
   const battleActive = activePrediction?.mode === "batalha";
@@ -68,21 +66,15 @@ const Dashboard = () => {
   const predictionPrice = activePrediction?.priceInitial ?? null;
   const countdown = anyPredictionActive ? timeRemaining : 0;
 
-  // Stats state
   const [acertosHoje, setAcertosHoje] = useState<string>("—");
   const [taxaAcerto, setTaxaAcerto] = useState<string>("—");
   const [ranking, setRanking] = useState<string>("—");
 
-  // Buzz Score state
   const [buzzBTC, setBuzzBTC] = useState<BuzzResult | null>(null);
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
   const [buzzLastUpdated, setBuzzLastUpdated] = useState<Date | null>(null);
   const [buzzBattleLastUpdated, setBuzzBattleLastUpdated] = useState<Date | null>(null);
 
-  const formatBuzzTime = (d: Date) =>
-    `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-
-  // Fetch BTC buzz score on mount + every 5 min
   useEffect(() => {
     const fetchBuzz = async () => {
       const result = await getBuzzScore("BTC");
@@ -94,7 +86,6 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch all buzz scores for battle mode + every 5 min
   useEffect(() => {
     if (gameMode !== "battle") return;
     const fetchAll = async () => {
@@ -111,12 +102,10 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [gameMode]);
 
-  // Check chest availability
   useEffect(() => {
     checkChest().then(setChestAvailable);
   }, [checkChest]);
 
-  // Fetch stats
   const fetchStats = useCallback(async () => {
     if (!user || user.id === "local") return;
     try {
@@ -150,7 +139,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch prices exclusively from Pacifica
   const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
     const pacifica = await fetchPacificaPrices();
     if (pacifica && pacifica.bitcoin) {
@@ -192,7 +180,6 @@ const Dashboard = () => {
   const change24h = coins.bitcoin?.change24h ?? null;
   const btcPacifica = pacificaData?.bitcoin ?? null;
 
-  // ── Classic ──
   const handlePress = (dir: "up" | "down") => {
     if (anyPredictionActive || price === null) return;
     setActivePrediction({
@@ -205,7 +192,6 @@ const Dashboard = () => {
     });
   };
 
-  // ── Battle ──
   const handleBattleConfirm = (chosenCoin: string, arenaCoins: string[]) => {
     if (anyPredictionActive) return;
     const chosenTicker = COIN_ID_MAP[chosenCoin] ?? chosenCoin.toUpperCase();
@@ -228,7 +214,6 @@ const Dashboard = () => {
     });
   };
 
-  // ── Precision ──
   const handlePrecisionConfirm = (range: PrecisionRange, reward: number) => {
     if (anyPredictionActive || price === null) return;
     setActivePrediction({
@@ -249,14 +234,13 @@ const Dashboard = () => {
   const userLeague = user?.league ?? "Bronze";
   const initials = (user?.username ?? "PE").slice(0, 2).toUpperCase();
 
-  // Helper to get prediction label
   const getPredictionLabel = () => {
     if (!activePrediction) return "";
     if (activePrediction.mode === "classico") {
-      return predictionDir === "up" ? "SOBE ↑" : "CAI ↓";
+      return predictionDir === "up" ? "UP ↑" : "DOWN ↓";
     }
     if (activePrediction.mode === "batalha") {
-      return `Apostou em ${activePrediction.direction}`;
+      return `Bet on ${activePrediction.direction}`;
     }
     if (activePrediction.mode === "precisao") {
       const rangeLabels: Record<string, string> = {
@@ -265,20 +249,19 @@ const Dashboard = () => {
         "0.5-2": "0.5% – 2%",
         "2+": "> 2%",
       };
-      return `Faixa ${rangeLabels[activePrediction.direction] ?? activePrediction.direction}`;
+      return `Range ${rangeLabels[activePrediction.direction] ?? activePrediction.direction}`;
     }
     return "";
   };
 
   const getModeLabel = () => {
     if (!activePrediction) return "";
-    if (activePrediction.mode === "classico") return "Clássico";
-    if (activePrediction.mode === "batalha") return "Batalha";
-    if (activePrediction.mode === "precisao") return "Precisão";
+    if (activePrediction.mode === "classico") return "Classic";
+    if (activePrediction.mode === "batalha") return "Battle";
+    if (activePrediction.mode === "precisao") return "Precision";
     return "";
   };
 
-  // Funding Rate + OI component for classic mode
   const PacificaIndicators = ({ asset }: { asset: PacificaAsset | null }) => {
     if (!asset || !usingPacifica) return null;
     const fundingNum = parseFloat(asset.funding);
@@ -296,7 +279,7 @@ const Dashboard = () => {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
+                <p className="text-xs">Hourly rate paid between buyers and sellers on Pacifica</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -350,7 +333,7 @@ const Dashboard = () => {
         </div>
         <div className="flex items-center gap-1.5">
           <Flame size={18} className="text-warning" />
-          <span className="text-foreground text-sm font-medium">Streak: {userStreak} dias</span>
+          <span className="text-foreground text-sm font-medium">Streak: {userStreak} days</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -364,7 +347,6 @@ const Dashboard = () => {
       <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-24 gap-4 overflow-y-auto relative z-10">
         <GameModeSelector selected={gameMode} onSelect={setGameMode} disabled={anyPredictionActive} />
 
-        {/* Active prediction card — visible across all modes */}
         {anyPredictionActive && (
           <div
             className="w-full max-w-lg rounded-[16px] p-4 flex items-center gap-3"
@@ -379,7 +361,7 @@ const Dashboard = () => {
                 {getModeLabel()} — {getPredictionLabel()}
               </p>
               <p className="text-ocean-muted text-xs">
-                Aguardando resultado...
+                Awaiting result...
               </p>
             </div>
             <span className={`font-bold text-lg tabular-nums shrink-0 ${timerLow ? "text-danger" : "text-pacific"}`}>
@@ -392,7 +374,7 @@ const Dashboard = () => {
           <>
             <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
               <div className="flex items-center justify-between mb-5">
-                <span className="text-ocean-muted text-xs uppercase tracking-wider font-medium">Previsão do dia</span>
+                <span className="text-ocean-muted text-xs uppercase tracking-wider font-medium">Daily Prediction</span>
                 <span className={`font-bold text-lg tabular-nums ${predictionActive ? (timerLow ? "text-danger" : "text-pacific") : "text-pacific"}`}>
                   {predictionActive ? formatTimer(countdown) : "01:00"}
                 </span>
@@ -412,7 +394,7 @@ const Dashboard = () => {
                     <span className={`text-foreground text-5xl font-bold transition-colors duration-300 ${flashing ? "animate-price-flash" : ""}`}>
                       ${formatPrice(price)}
                     </span>
-                    {apiError && <span className="w-2 h-2 rounded-full bg-danger shrink-0" title="Sem atualização" />}
+                    {apiError && <span className="w-2 h-2 rounded-full bg-danger shrink-0" title="No update" />}
                   </div>
                 )}
               </div>
@@ -430,7 +412,6 @@ const Dashboard = () => {
                 )}
               </div>
 
-              {/* Pacifica Funding Rate + Open Interest */}
               <PacificaIndicators asset={btcPacifica} />
 
               <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />
@@ -449,9 +430,7 @@ const Dashboard = () => {
                 {buzzBTC === null ? (
                   <div className="h-3 w-32 rounded bg-ocean-dark animate-pulse mt-1.5" />
                 ) : (
-                  <>
-                    <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
-                  </>
+                  <p className="text-ocean-muted text-[11px] mt-1.5">{buzzBTC.label}</p>
                 )}
               </div>
 
@@ -463,7 +442,7 @@ const Dashboard = () => {
                     anyPredictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-success hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "up" && predictionActive ? "!opacity-100 !bg-success !text-ocean-dark" : ""}`}
                 >
-                  <ArrowUp size={20} className={predictionDir === "up" && predictionActive ? "text-ocean-dark" : "text-success"} /> SOBE
+                  <ArrowUp size={20} className={predictionDir === "up" && predictionActive ? "text-ocean-dark" : "text-success"} /> UP
                 </button>
                 <button
                   onClick={() => handlePress("down")}
@@ -472,7 +451,7 @@ const Dashboard = () => {
                     anyPredictionActive ? "opacity-40 cursor-not-allowed" : "hover:bg-danger hover:text-ocean-dark active:animate-press"
                   } ${predictionDir === "down" && predictionActive ? "!opacity-100 !bg-danger !text-ocean-dark" : ""}`}
                 >
-                  <ArrowDown size={20} className={predictionDir === "down" && predictionActive ? "text-ocean-dark" : "text-danger"} /> CAI
+                  <ArrowDown size={20} className={predictionDir === "down" && predictionActive ? "text-ocean-dark" : "text-danger"} /> DOWN
                 </button>
               </div>
 
@@ -480,9 +459,13 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <Loader2 size={14} className="text-ocean-muted animate-spin" />
                   <span className="text-ocean-muted text-sm">
-                    Aguardando resultado... Preço de entrada: ${predictionPrice !== null ? formatPrice(predictionPrice) : "—"}
+                    Awaiting result... Entry price: ${predictionPrice !== null ? formatPrice(predictionPrice) : "—"}
                   </span>
                 </div>
+              )}
+
+              {apiError && (
+                <p className="text-[12px] text-[#8BB8CC] animate-pulse text-center mt-2">Reconnecting to Pacifica...</p>
               )}
 
               <PoweredByPacifica />
@@ -490,8 +473,8 @@ const Dashboard = () => {
 
             <div className="w-full max-w-lg grid grid-cols-3 gap-3">
               {[
-                { label: "Acertos hoje", value: acertosHoje },
-                { label: "Taxa de acerto", value: taxaAcerto },
+                { label: "Today's hits", value: acertosHoje },
+                { label: "Hit rate", value: taxaAcerto },
                 { label: "Ranking", value: ranking },
               ].map((s) => (
                 <div key={s.label} className="rounded-[16px] bg-card-surface p-3 flex flex-col items-center gap-1" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
@@ -551,14 +534,14 @@ const Dashboard = () => {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4" onClick={() => setShowChestModal(false)}>
           <div className="bg-card-surface rounded-[16px] p-6 w-full max-w-sm text-center animate-result-enter" style={{ border: "1px solid rgba(92,200,232,0.3)" }} onClick={(e) => e.stopPropagation()}>
             <Gift size={48} className="text-pacific mx-auto mb-4" />
-            <h2 className="text-foreground text-xl font-bold mb-2">Baú Diário!</h2>
+            <h2 className="text-foreground text-xl font-bold mb-2">Daily Chest!</h2>
             <p className="text-ocean-muted text-sm mb-4">
-              {chestReward.tipo === "moedas" && `Você ganhou +${chestReward.valor} troféus!`}
-              {chestReward.tipo === "escudo" && `Você ganhou ${chestReward.valor} escudo protetor!`}
-              {chestReward.tipo === "xp_boost" && `Você ganhou ${chestReward.valor}x XP Boost!`}
+              {chestReward.tipo === "moedas" && `You earned +${chestReward.valor} trophies!`}
+              {chestReward.tipo === "escudo" && `You earned ${chestReward.valor} streak shield!`}
+              {chestReward.tipo === "xp_boost" && `You earned ${chestReward.valor}x XP Boost!`}
             </p>
             <button onClick={() => setShowChestModal(false)} className="w-full h-11 rounded-[12px] bg-pacific text-ocean-dark font-bold text-sm">
-              Fechar
+              Collect
             </button>
           </div>
         </div>
