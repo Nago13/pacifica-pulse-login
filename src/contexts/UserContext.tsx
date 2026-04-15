@@ -383,7 +383,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         // Earn a battle chest on correct prediction
         if (acertou) {
           console.log('Salvando baú com mode:', mode);
-          const earned = await earnBattleChest(mode);
+          const earned = await earnBattleChestRef.current(mode);
           console.log('Baú ganho:', earned);
         }
       }
