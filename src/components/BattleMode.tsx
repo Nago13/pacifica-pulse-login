@@ -208,6 +208,9 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
               );
             })}
           </div>
+          {buzzLastUpdated && (
+            <p className="text-[10px] mt-2 text-center" style={{ color: "#8BB8CC" }}>{formatBuzzTime(buzzLastUpdated)}</p>
+          )}
 
           {selectionError && (
             <p className="text-danger text-xs text-center mb-3">Selecione pelo menos 2 moedas</p>
