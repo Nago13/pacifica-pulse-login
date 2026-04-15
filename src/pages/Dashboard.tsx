@@ -417,6 +417,9 @@ const Dashboard = () => {
                   </div>
                 )}
               </div>
+              {price !== null && (
+                <p className="text-[10px] mb-1" style={{ color: "#8BB8CC" }}>via Pacifica · updated {priceAgoText}</p>
+              )}
               <div className="flex items-center gap-1 mb-4">
                 {change24h === null ? (
                   <div className="h-4 w-20 rounded bg-ocean-dark animate-pulse" />
