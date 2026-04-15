@@ -7,6 +7,7 @@ import { formatFundingRate, getFundingColor } from "@/lib/pacificaApi";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
 import solanaLogo from "@/assets/solana-logo.png";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BattleModeProps {

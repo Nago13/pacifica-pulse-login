@@ -4,6 +4,7 @@ import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import type { BuzzResult } from "@/lib/elfaApi";
 import type { PacificaAsset } from "@/lib/pacificaApi";
 import { formatFundingRate, formatOpenInterest, getFundingColor, getFundingSentiment } from "@/lib/pacificaApi";
+import pacificaLogo from "@/assets/pacifica-logo.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
