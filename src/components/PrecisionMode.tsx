@@ -2,6 +2,9 @@ import { useState } from "react";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import type { BuzzResult } from "@/lib/elfaApi";
+import type { PacificaAsset } from "@/lib/pacificaApi";
+import { formatFundingRate, formatOpenInterest, getFundingColor } from "@/lib/pacificaApi";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrecisionRange = "0-0.1" | "0.1-0.5" | "0.5-2" | "2+";
 
@@ -19,6 +22,8 @@ interface PrecisionModeProps {
   formatPrice: (p: number) => string;
   buzzScore: BuzzResult | null;
   buzzLastUpdated: Date | null;
+  pacificaAsset: PacificaAsset | null;
+  usingPacifica: boolean;
 }
 
 const RANGES: {
@@ -51,6 +56,7 @@ const PrecisionMode = ({
   price, change24h, flashing, apiError,
   precisionActive, precisionCountdown, precisionRange, precisionPrice,
   onConfirm, formatTimer, formatPrice, buzzScore, buzzLastUpdated,
+  pacificaAsset, usingPacifica,
 }: PrecisionModeProps) => {
   const formatBuzzTime = (d: Date) =>
     `Atualizado às ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
@@ -62,6 +68,8 @@ const PrecisionMode = ({
     const range = RANGES.find((r) => r.id === selected)!;
     onConfirm(selected, range.reward);
   };
+
+  const fundingNum = pacificaAsset ? parseFloat(pacificaAsset.funding) : 0;
 
   return (
     <div className="w-full max-w-lg rounded-[16px] bg-card-surface p-5 sm:p-6" style={{ border: "1px solid rgba(92,200,232,0.15)" }}>
@@ -95,7 +103,7 @@ const PrecisionMode = ({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-1 mb-5">
+      <div className="flex items-center gap-1 mb-4">
         {change24h === null ? (
           <div className="h-4 w-20 rounded bg-ocean-dark animate-pulse" />
         ) : (
@@ -108,6 +116,31 @@ const PrecisionMode = ({
           </>
         )}
       </div>
+
+      {/* Pacifica Funding Rate + Open Interest */}
+      {pacificaAsset && usingPacifica && (
+        <div className="flex items-center gap-4 mb-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Funding Rate</span>
+                  <span className={`text-[12px] font-bold ${getFundingColor(pacificaAsset.funding)}`} style={fundingNum === 0 ? { color: "#8BB8CC" } : undefined}>
+                    {formatFundingRate(pacificaAsset.funding)}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Taxa paga a cada hora entre compradores e vendedores na Pacifica</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px]" style={{ color: "#8BB8CC" }}>Open Interest</span>
+            <span className="text-foreground font-bold text-[12px]">{formatOpenInterest(pacificaAsset.open_interest)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Buzz Score */}
       <div className="mb-5">
@@ -187,6 +220,14 @@ const PrecisionMode = ({
           <span className="text-ocean-muted text-sm">
             Aguardando variação... Preço de entrada: ${precisionPrice !== null ? formatPrice(precisionPrice) : "—"}
           </span>
+        </div>
+      )}
+
+      {/* Powered by Pacifica */}
+      {usingPacifica && (
+        <div className="flex items-center justify-center gap-1.5 mt-4">
+          <div className="w-3.5 h-3.5 rounded-full bg-pacific shrink-0" />
+          <span className="text-[10px]" style={{ color: "#8BB8CC" }}>Dados via Pacifica</span>
         </div>
       )}
     </div>
