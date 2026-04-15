@@ -78,7 +78,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error)
     return new Response(
-      JSON.stringify({ score: 50, label: 'Atividade moderada nas redes' }),
+      JSON.stringify({ score: 50, label: 'Moderate social activity' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   }
