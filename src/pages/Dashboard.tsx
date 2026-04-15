@@ -15,7 +15,6 @@ import type { PrecisionRange } from "@/components/PrecisionMode";
 import { useUser } from "@/contexts/UserContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&precision=2";
 const COUNTDOWN_SECONDS = 60;
 
 export interface CoinData {
@@ -151,78 +150,26 @@ const Dashboard = () => {
     }
   };
 
-  // CoinGecko fallback
-  const fetchCoinGeckoPrices = useCallback(async (): Promise<CoinPrices | null> => {
-    try {
-      const res = await fetch(API_URL_MULTI);
-      if (!res.ok) throw new Error("API error");
-      const data = await res.json();
-      return {
-        bitcoin: { price: data.bitcoin.usd, change24h: data.bitcoin.usd_24h_change },
-        ethereum: { price: data.ethereum.usd, change24h: data.ethereum.usd_24h_change },
-        solana: { price: data.solana.usd, change24h: data.solana.usd_24h_change },
-      };
-    } catch {
-      return null;
-    }
-  }, []);
-
-  // Primary: Pacifica, fallback: CoinGecko
+  // Fetch prices exclusively from Pacifica
   const fetchPrices = useCallback(async (): Promise<CoinPrices | null> => {
-    try {
-      const pacifica = await fetchPacificaPrices();
-      if (pacifica && pacifica.bitcoin) {
-        const newCoins: CoinPrices = {
-          bitcoin: pacifica.bitcoin ? { price: pacifica.bitcoin.mark, change24h: coins.bitcoin?.change24h ?? 0 } : null,
-          ethereum: pacifica.ethereum ? { price: pacifica.ethereum.mark, change24h: coins.ethereum?.change24h ?? 0 } : null,
-          solana: pacifica.solana ? { price: pacifica.solana.mark, change24h: coins.solana?.change24h ?? 0 } : null,
-        };
-        setCoins(newCoins);
-        setPacificaData(pacifica);
-        setUsingPacifica(true);
-        setApiError(false);
-        setFlashing(true);
-        setTimeout(() => setFlashing(false), 300);
-        return newCoins;
-      }
-      throw new Error("Pacifica unavailable");
-    } catch {
-      // Fallback to CoinGecko
-      try {
-        const gecko = await fetchCoinGeckoPrices();
-        if (gecko) {
-          setCoins(gecko);
-          setPacificaData(null);
-          setUsingPacifica(false);
-          setApiError(false);
-          setFlashing(true);
-          setTimeout(() => setFlashing(false), 300);
-          return gecko;
-        }
-        throw new Error("CoinGecko also failed");
-      } catch {
-        setApiError(true);
-        return null;
-      }
+    const pacifica = await fetchPacificaPrices();
+    if (pacifica && pacifica.bitcoin) {
+      const newCoins: CoinPrices = {
+        bitcoin: pacifica.bitcoin ? { price: pacifica.bitcoin.mark, change24h: pacifica.bitcoin.change24h } : null,
+        ethereum: pacifica.ethereum ? { price: pacifica.ethereum.mark, change24h: pacifica.ethereum.change24h } : null,
+        solana: pacifica.solana ? { price: pacifica.solana.mark, change24h: pacifica.solana.change24h } : null,
+      };
+      setCoins(newCoins);
+      setPacificaData(pacifica);
+      setUsingPacifica(true);
+      setApiError(false);
+      setFlashing(true);
+      setTimeout(() => setFlashing(false), 300);
+      return newCoins;
     }
-  }, [fetchCoinGeckoPrices]);
-
-  // Also fetch 24h change from CoinGecko in background (Pacifica doesn't provide it)
-  useEffect(() => {
-    const fetch24h = async () => {
-      const gecko = await fetchCoinGeckoPrices();
-      if (gecko) {
-        setCoins(prev => ({
-          bitcoin: prev.bitcoin ? { ...prev.bitcoin, change24h: gecko.bitcoin?.change24h ?? prev.bitcoin.change24h } : prev.bitcoin,
-          ethereum: prev.ethereum ? { ...prev.ethereum, change24h: gecko.ethereum?.change24h ?? prev.ethereum.change24h } : prev.ethereum,
-          solana: prev.solana ? { ...prev.solana, change24h: gecko.solana?.change24h ?? prev.solana.change24h } : prev.solana,
-        }));
-      }
-    };
-    fetch24h();
-    const interval = setInterval(fetch24h, 60000);
-    return () => clearInterval(interval);
-  }, [fetchCoinGeckoPrices]);
+    setApiError(true);
+    return null;
+  }, []);
 
   useEffect(() => {
     fetchPrices();

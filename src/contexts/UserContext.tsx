@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { fetchPacificaPrices } from "@/lib/pacificaApi";
 
 export interface UserData {
   id: string;
@@ -225,11 +226,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolveClassic = async () => {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
-      const precoFinal = data.bitcoin.usd;
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica?.bitcoin) throw new Error("Pacifica unavailable");
+      const precoFinal = pacifica.bitcoin.mark;
       const variacao = ((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100;
       const acertou = activePrediction!.direction === "up" ? variacao > 0 : variacao < 0;
       const trofeusGanhos = acertou ? 25 : -15;
@@ -255,19 +254,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolveBattle = async () => {
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica) throw new Error("Pacifica unavailable");
       const arenaIds = activePrediction!.assetsArena ?? [];
-      const coinIds = arenaIds.join(",");
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
       const pricesInitial = activePrediction!.pricesInitial ?? {};
+
+      const PACIFICA_MAP: Record<string, keyof typeof pacifica> = {
+        bitcoin: "bitcoin", ethereum: "ethereum", solana: "solana",
+      };
 
       const arenaVariations: Record<string, number> = {};
       for (const coinId of arenaIds) {
         const ticker = COIN_ID_MAP[coinId] ?? coinId.toUpperCase();
         const startPrice = pricesInitial[ticker] ?? 0;
-        const endPrice = data[coinId]?.usd ?? startPrice;
+        const asset = pacifica[PACIFICA_MAP[coinId]];
+        const endPrice = asset?.mark ?? startPrice;
         arenaVariations[ticker] = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
       }
 
@@ -301,11 +302,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolvePrecision = async () => {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
-      const precoFinal = data.bitcoin.usd;
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica?.bitcoin) throw new Error("Pacifica unavailable");
+      const precoFinal = pacifica.bitcoin.mark;
       const variacaoAbs = Math.abs(((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100);
       const faixaEscolhida = activePrediction!.direction;
 
