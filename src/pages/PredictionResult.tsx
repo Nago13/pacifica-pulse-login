@@ -616,6 +616,8 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
           <RotateCcw size={16} /> Play again
         </button>
       </div>
+
+      <PacificaResultBanner league={user?.league ?? "Bronze"} />
     </div>
   );
 };
