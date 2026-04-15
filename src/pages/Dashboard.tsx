@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import oceanCoralBg from "@/assets/ocean-coral-bg.png";
 import { Flame, Trophy, ArrowUp, ArrowDown, Package, Loader2, Gift } from "lucide-react";
-import { getBuzzScore, type BuzzResult } from "@/lib/elfaApi";
+import { getBuzzScore, pingElfa, type BuzzResult } from "@/lib/elfaApi";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
@@ -74,7 +74,12 @@ const Dashboard = () => {
   const [buzzAll, setBuzzAll] = useState<Record<string, BuzzResult>>({});
   const buzzInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch BTC buzz score on mount + every 5 min
+  // Ping Elfa API on mount to verify key
+  useEffect(() => {
+    pingElfa();
+  }, []);
+
+  // Fetch BTC buzz score on mount + every 1 min
   useEffect(() => {
     const fetchBuzz = async () => {
       const result = await getBuzzScore("BTC");
