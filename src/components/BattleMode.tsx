@@ -111,6 +111,17 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                         {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                       </span>
                     </div>
+                    {buzzScores[coin.ticker] && (
+                      <div className="w-full mt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-ocean-muted text-[9px]">Buzz</span>
+                          <span className="text-pacific text-[9px] font-bold">{buzzScores[coin.ticker].score}</span>
+                        </div>
+                        <div className="w-full h-1 rounded-full bg-ocean-dark mt-0.5">
+                          <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzScores[coin.ticker].score}%` }} />
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -175,6 +186,17 @@ const BattleMode = ({ coins, battleActive, battleCountdown, battleChoice, onConf
                           {data.change24h >= 0 ? "+" : ""}{data.change24h.toFixed(2)}%
                         </span>
                       </div>
+                      {buzzScores[coin.ticker] && (
+                        <div className="w-full mt-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-ocean-muted text-[9px]">Buzz</span>
+                            <span className="text-pacific text-[9px] font-bold">{buzzScores[coin.ticker].score}</span>
+                          </div>
+                          <div className="w-full h-1 rounded-full bg-ocean-dark mt-0.5">
+                            <div className="h-full rounded-full bg-pacific transition-all duration-500" style={{ width: `${buzzScores[coin.ticker].score}%` }} />
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="h-4 w-16 rounded bg-ocean-dark animate-pulse" />
