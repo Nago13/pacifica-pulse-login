@@ -147,7 +147,7 @@
   to { transform: rotate(360deg); }
 }
 
-
+.ocean-bubbles {
   position: fixed;
   inset: 0;
   overflow: hidden;
