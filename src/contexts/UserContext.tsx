@@ -302,11 +302,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     const resolvePrecision = async () => {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&precision=2`
-      );
-      const data = await res.json();
-      const precoFinal = data.bitcoin.usd;
+      const pacifica = await fetchPacificaPrices();
+      if (!pacifica?.bitcoin) throw new Error("Pacifica unavailable");
+      const precoFinal = pacifica.bitcoin.mark;
       const variacaoAbs = Math.abs(((precoFinal - activePrediction!.priceInitial) / activePrediction!.priceInitial) * 100);
       const faixaEscolhida = activePrediction!.direction;
 
