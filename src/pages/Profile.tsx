@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
+import PacificaConversionCard from "@/components/PacificaConversionCard";
 import { useUser } from "@/contexts/UserContext";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
@@ -238,6 +239,9 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Pacifica Conversion CTA */}
+          <PacificaConversionCard hitRate={totalPredictions > 0 ? `${hitRate}%` : "0%"} totalPredictions={totalPredictions} />
 
           {/* Sign Out */}
           <button

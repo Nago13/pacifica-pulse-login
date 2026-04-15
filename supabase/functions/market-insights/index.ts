@@ -91,6 +91,18 @@ serve(async (req) => {
       console.error('Elfa mentions error:', e)
     }
 
+    // Fetch recent trades from Pacifica
+    let trades: any[] = []
+    try {
+      const tradesRes = await fetch(
+        `https://api.pacifica.fi/api/v1/trades?symbol=${symbol}`
+      )
+      const tradesData = await tradesRes.json().catch(() => ({ data: [] }))
+      trades = tradesData?.data?.slice(0, 8) ?? []
+    } catch (e) {
+      console.error('Pacifica trades error:', e)
+    }
+
     return new Response(
       JSON.stringify({
         symbol,
@@ -103,6 +115,7 @@ serve(async (req) => {
         volume24h,
         candles,
         mentions,
+        trades,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
