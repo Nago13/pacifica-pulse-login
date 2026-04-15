@@ -41,7 +41,7 @@ const GameModeSelector = ({ selected, onSelect, disabled }: GameModeSelectorProp
       <span className="text-ocean-muted text-xs uppercase tracking-wider font-medium mb-3 block">
         Modo de jogo
       </span>
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="grid grid-cols-3 gap-3">
         {modes.map((mode) => {
           const isSelected = selected === mode.id;
           const Icon = mode.icon;
@@ -50,7 +50,7 @@ const GameModeSelector = ({ selected, onSelect, disabled }: GameModeSelectorProp
               key={mode.id}
               onClick={() => !disabled && onSelect(mode.id)}
               disabled={disabled}
-              className={`flex-shrink-0 w-[140px] rounded-[16px] p-4 flex flex-col items-start gap-2 transition-all duration-200 text-left ${
+              className={`rounded-[16px] p-4 flex flex-col items-start gap-2 transition-all duration-200 text-left ${
                 disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               } ${
                 isSelected
