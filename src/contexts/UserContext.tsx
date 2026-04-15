@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { fetchPacificaPrices } from "@/lib/pacificaApi";
 
 export interface UserData {
   id: string;
