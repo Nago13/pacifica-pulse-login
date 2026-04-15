@@ -11,7 +11,7 @@ import PrecisionMode from "@/components/PrecisionMode";
 import type { PrecisionRange } from "@/components/PrecisionMode";
 import { useUser } from "@/contexts/UserContext";
 
-const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true";
+const API_URL_MULTI = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&precision=2";
 const COUNTDOWN_SECONDS = 60;
 
 export interface CoinData {
@@ -143,7 +143,7 @@ const Dashboard = () => {
   }, []);
 
   const formatPrice = (p: number) =>
-    p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    Number(p.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const price = coins.bitcoin?.price ?? null;
   const change24h = coins.bitcoin?.change24h ?? null;
