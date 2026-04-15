@@ -59,10 +59,10 @@ serve(async (req) => {
     const buzzScore = Math.min(Math.round(mencoes / 10), 100)
 
     const getLabel = (score: number) => {
-      if (score <= 30) return 'Baixa atividade nas redes'
-      if (score <= 60) return 'Atividade moderada nas redes'
-      if (score <= 80) return 'Alta atividade nas redes'
-      return 'Atividade explosiva nas redes'
+      if (score <= 30) return 'Low social activity'
+      if (score <= 60) return 'Moderate social activity'
+      if (score <= 80) return 'High social activity'
+      return 'Explosive social activity'
     }
 
     const finalScore = buzzScore || 50
