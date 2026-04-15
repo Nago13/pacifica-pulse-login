@@ -136,7 +136,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [activePrediction, setActivePredictionState] = useState<ActivePrediction | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const resolvingRef = useRef(false);
+  const earnBattleChestRef = useRef<(mode: string) => Promise<boolean>>(async () => false);
 
   const setActivePrediction = useCallback((p: ActivePrediction | null) => {
     setActivePredictionState(p);
