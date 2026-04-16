@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { BarChart2, Sparkles, Quote, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
 import LiveTradesFeed from "@/components/LiveTradesFeed";
+import CandlestickChart from "@/components/CandlestickChart";
 
 const COINS = ["BTC", "ETH", "SOL"] as const;
 const INTERVALS = ["1m", "5m", "15m", "1h", "4h"] as const;

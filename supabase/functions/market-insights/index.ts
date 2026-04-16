@@ -51,6 +51,9 @@ serve(async (req) => {
     const now = Date.now()
     const volatility = Math.abs(change24h) / 100 * 0.15 || 0.002
 
+    const totalVol = parseFloat(volume24h) || 0
+    const avgVolPerCandle = totalVol / numCandles
+
     const candles = []
     for (let i = numCandles - 1; i >= 0; i--) {
       const t = now - i * step
@@ -61,7 +64,8 @@ serve(async (req) => {
       const high = close * (1 + Math.random() * volatility * 0.5)
       const low = close * (1 - Math.random() * volatility * 0.5)
       const open = i === numCandles - 1 ? yesterdayPrice : candles[candles.length - 1]?.close || close
-      candles.push({ t, open: +open.toFixed(2), high: +high.toFixed(2), low: +low.toFixed(2), close: +close.toFixed(2) })
+      const volume = avgVolPerCandle * (0.5 + Math.random())
+      candles.push({ t, open: +open.toFixed(2), high: +high.toFixed(2), low: +low.toFixed(2), close: +close.toFixed(2), volume: +volume.toFixed(0) })
     }
 
     // Compute 24h high/low from candles
