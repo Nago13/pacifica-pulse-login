@@ -329,6 +329,9 @@ const PredictionResult = () => {
         <div className="text-center mb-5">
           <CountUp target={finalTrophies} prefix={acertou ? "+" : "−"} className={`text-[64px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
           <p className="text-ocean-muted text-xs mt-1">trophies</p>
+          {acertou && ["Gold", "Platinum", "Diamond", "Legendary"].includes(user?.league ?? "") && (
+            <p className="text-[11px] mt-1" style={{ color: "#F5A623" }}>+ closer to Pacifica rewards</p>
+          )}
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-2">
@@ -593,6 +596,9 @@ const PrecisionResult = ({ state, navigate, user, streak, modalProps }: { state:
         <div className="text-center mb-5">
           <CountUp target={trophies} prefix={acertou ? "+" : "−"} className={`text-[56px] font-bold leading-none ${acertou ? "text-pacific" : "text-danger"}`} />
           <p className="text-ocean-muted text-xs mt-1">trophies</p>
+          {acertou && ["Gold", "Platinum", "Diamond", "Legendary"].includes(user?.league ?? "") && (
+            <p className="text-[11px] mt-1" style={{ color: "#F5A623" }}>+ closer to Pacifica rewards</p>
+          )}
         </div>
 
         <div className="h-px w-full mb-5" style={{ background: "rgba(255,255,255,0.06)" }} />

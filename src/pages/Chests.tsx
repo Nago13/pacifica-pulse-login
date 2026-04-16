@@ -243,6 +243,13 @@ const Chests = () => {
         </div>
       )}
 
+      {/* Rewards banner */}
+      <div className="relative z-10 w-full max-w-[480px] mx-auto text-center py-4 px-4" style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}>
+        <p className="text-[11px]" style={{ color: "#8BB8CC" }}>
+          🏆 Your trophies track your Pacifica journey. Future reward programs will recognize top players.
+        </p>
+      </div>
+
       <BottomNav />
     </div>
   );
