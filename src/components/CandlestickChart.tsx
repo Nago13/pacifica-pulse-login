@@ -23,94 +23,117 @@ const CandlestickChart = ({ candles, loading }: CandlestickChartProps) => {
   const volumeSeriesRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    const container = chartContainerRef.current;
+    if (!container) return;
+    if (container.clientWidth === 0) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { color: "transparent" },
-        textColor: "#8BB8CC",
-        fontFamily: "DM Sans, sans-serif",
-      },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0.05)" },
-        horzLines: { color: "rgba(255,255,255,0.05)" },
-      },
-      crosshair: { mode: 1 },
-      rightPriceScale: {
-        borderColor: "rgba(255,255,255,0.1)",
-      },
-      timeScale: {
-        borderColor: "rgba(255,255,255,0.1)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: 240,
-    });
+    try {
+      const chart = createChart(container, {
+        layout: {
+          background: { color: "transparent" },
+          textColor: "#8BB8CC",
+          fontFamily: "DM Sans, sans-serif",
+        },
+        grid: {
+          vertLines: { color: "rgba(255,255,255,0.05)" },
+          horzLines: { color: "rgba(255,255,255,0.05)" },
+        },
+        crosshair: { mode: 1 },
+        rightPriceScale: {
+          borderColor: "rgba(255,255,255,0.1)",
+        },
+        timeScale: {
+          borderColor: "rgba(255,255,255,0.1)",
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        width: container.clientWidth,
+        height: 240,
+        handleScroll: true,
+        handleScale: true,
+      });
 
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#1DB887",
-      downColor: "#E84855",
-      borderUpColor: "#1DB887",
-      borderDownColor: "#E84855",
-      wickUpColor: "#1DB887",
-      wickDownColor: "#E84855",
-    });
+      const candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: "#1DB887",
+        downColor: "#E84855",
+        borderUpColor: "#1DB887",
+        borderDownColor: "#E84855",
+        wickUpColor: "#1DB887",
+        wickDownColor: "#E84855",
+      });
 
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: { type: "volume" },
-      priceScaleId: "volume",
-    });
+      const volumeSeries = chart.addSeries(HistogramSeries, {
+        priceFormat: { type: "volume" },
+        priceScaleId: "volume",
+      });
 
-    chart.priceScale("volume").applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
+      chart.priceScale("volume").applyOptions({
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
 
-    chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
+      chartRef.current = chart;
+      candleSeriesRef.current = candleSeries;
+      volumeSeriesRef.current = volumeSeries;
 
-    const handleResize = () => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-      }
-    };
+      const resizeObserver = new ResizeObserver(() => {
+        if (container) {
+          chart.applyOptions({ width: container.clientWidth });
+        }
+      });
+      resizeObserver.observe(container);
 
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-    };
+      return () => {
+        resizeObserver.disconnect();
+        chart.remove();
+        chartRef.current = null;
+        candleSeriesRef.current = null;
+        volumeSeriesRef.current = null;
+      };
+    } catch (error) {
+      console.error("Chart init error:", error);
+    }
   }, []);
 
   useEffect(() => {
-    if (!candleSeriesRef.current || !candles.length) return;
+    if (!candleSeriesRef.current || !candles || candles.length === 0) return;
 
-    const formatted = candles
-      .map((c) => ({
-        time: (Math.floor(c.t / 1000)) as any,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }))
-      .sort((a, b) => a.time - b.time);
-
-    candleSeriesRef.current.setData(formatted);
-
-    if (volumeSeriesRef.current) {
-      const volumeData = candles
+    try {
+      const formatted = candles
+        .filter((c) => c.t && c.open && c.close)
         .map((c) => ({
-          time: (Math.floor(c.t / 1000)) as any,
-          value: c.volume ?? 0,
-          color: c.close >= c.open ? "rgba(29,184,135,0.4)" : "rgba(232,72,85,0.4)",
+          time: Math.floor(Number(c.t) / 1000) as any,
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close),
         }))
-        .sort((a, b) => a.time - b.time);
+        .sort((a, b) => a.time - b.time)
+        .filter((c, i, arr) => i === 0 || c.time !== arr[i - 1].time);
 
-      volumeSeriesRef.current.setData(volumeData);
+      if (formatted.length > 0) {
+        candleSeriesRef.current.setData(formatted);
+      }
+
+      if (volumeSeriesRef.current) {
+        const volumeData = candles
+          .filter((c) => c.t && c.open && c.close)
+          .map((c) => ({
+            time: Math.floor(Number(c.t) / 1000) as any,
+            value: c.volume ?? 0,
+            color: c.close >= c.open ? "rgba(29,184,135,0.4)" : "rgba(232,72,85,0.4)",
+          }))
+          .sort((a, b) => a.time - b.time)
+          .filter((c, i, arr) => i === 0 || c.time !== arr[i - 1].time);
+
+        if (volumeData.length > 0) {
+          volumeSeriesRef.current.setData(volumeData);
+        }
+      }
+
+      chartRef.current?.timeScale().fitContent();
+    } catch (error) {
+      console.error("Chart data error:", error);
     }
-
-    chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
   if (loading) {
@@ -120,7 +143,7 @@ const CandlestickChart = ({ candles, loading }: CandlestickChartProps) => {
   return (
     <div
       ref={chartContainerRef}
-      style={{ width: "100%", height: "240px" }}
+      style={{ width: "100%", height: "240px", minHeight: "240px" }}
     />
   );
 };
