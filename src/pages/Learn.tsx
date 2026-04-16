@@ -194,12 +194,10 @@ const Learn = () => {
         </div>
 
         {/* Social Signals */}
-        <div className="mb-5">
-          <h2 className="text-sm font-bold text-foreground mb-1">Social Signals</h2>
-          <p className="text-[11px] text-ocean-muted mb-3">Latest mentions from crypto Twitter, via Elfa AI</p>
-          {loading ? (
-            <Skeleton className="h-20 w-full rounded-lg" />
-          ) : (data?.mentions?.length ?? 0) > 0 ? (
+        {(data?.mentions?.length ?? 0) > 0 && (
+          <div className="mb-5">
+            <h2 className="text-sm font-bold text-foreground mb-1">Social Signals</h2>
+            <p className="text-[11px] text-ocean-muted mb-3">Latest mentions from crypto Twitter, via Elfa AI</p>
             <div className="flex flex-col gap-2">
               {data!.mentions.slice(0, 5).map((m, i) => (
                 <div key={i} className="bg-card-dark rounded-[10px] p-3">
@@ -213,10 +211,8 @@ const Learn = () => {
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-ocean-muted text-center text-sm py-4">No social signals available right now</p>
+          </div>
         )}
-        </div>
 
         {/* Live Trades Feed */}
         <LiveTradesFeed trades={data?.trades ?? []} />
