@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
 import LiveTradesFeed from "@/components/LiveTradesFeed";
-import CandlestickChart from "@/components/CandlestickChart";
+import SimpleCandleChart from "@/components/SimpleCandleChart";
 
 const COINS = ["BTC", "ETH", "SOL"] as const;
 const INTERVALS = ["1m", "5m", "15m", "1h", "4h"] as const;
@@ -190,7 +190,7 @@ const Learn = () => {
 
         {/* Price Chart */}
         <div className="bg-card-dark rounded-xl p-3 mb-5">
-          <CandlestickChart candles={data?.candles ?? []} loading={loading} />
+          <SimpleCandleChart candles={data?.candles ?? []} loading={loading} />
         </div>
 
         {/* Social Signals */}
