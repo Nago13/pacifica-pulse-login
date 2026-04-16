@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase } from "@/lib/supabase";
 import { fetchPacificaPrices } from "@/lib/pacificaApi";
+import { toast } from "sonner";
 
 export interface UserData {
   id: string;
@@ -487,6 +488,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const newTrophies = Math.max(0, user.trophies + input.trophies_delta);
       const newStreak = input.result ? user.streak + 1 : 0;
       const newLeague = calcLeague(newTrophies);
+      const oldLeague = user.league;
+
+      if (newLeague !== oldLeague && input.trophies_delta > 0) {
+        toast(`You reached ${newLeague} League! Your future Pacifica rewards just got bigger.`, {
+          duration: 4000,
+          style: {
+            background: "#1A3A4E",
+            borderLeft: "3px solid #F5A623",
+            borderRadius: "0 8px 8px 0",
+            color: "white",
+            fontSize: "13px",
+            padding: "12px 16px",
+          },
+        });
+      }
 
       await supabase
         .from("users")

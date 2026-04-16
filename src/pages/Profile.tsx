@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import PacificaConversionCard from "@/components/PacificaConversionCard";
+import FutureRewardsCard from "@/components/FutureRewardsCard";
 import { useUser } from "@/contexts/UserContext";
 import bitcoinLogo from "@/assets/bitcoin-logo.png";
 import ethereumLogo from "@/assets/ethereum-logo.png";
@@ -239,6 +240,9 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Future Rewards */}
+          <FutureRewardsCard currentLeague={userLeague} />
 
           {/* Pacifica Conversion CTA */}
           <PacificaConversionCard hitRate={totalPredictions > 0 ? `${hitRate}%` : "0%"} totalPredictions={totalPredictions} />
