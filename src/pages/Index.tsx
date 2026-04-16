@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Trophy, Flame, TrendingUp, Waves } from "lucide-react";
+import { Trophy, Flame, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -58,7 +58,15 @@ const Index = () => {
       <div className="w-full lg:w-[45%] bg-ocean-dark flex items-center justify-center p-8">
         <div className="w-full max-w-sm flex flex-col items-center gap-8">
           <div className="flex items-center gap-3 animate-stagger-1">
-            <Waves className="text-pacific" size={36} />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="40" height="40">
+              <rect width="32" height="32" rx="6" fill="#0D1B2A"/>
+              <path d="M4 20 Q8 14 12 20 Q16 26 20 20 Q24 14 28 20"
+                    fill="none" stroke="#5CC8E8" strokeWidth="2.5"
+                    strokeLinecap="round"/>
+              <path d="M4 24 Q8 18 12 24 Q16 30 20 24 Q24 18 28 24"
+                    fill="none" stroke="#5CC8E8" strokeWidth="1.5"
+                    strokeLinecap="round" opacity="0.5"/>
+            </svg>
             <span className="text-foreground font-bold text-2xl">Pacifica Pulse</span>
           </div>
           <p className="text-ocean-muted text-base animate-stagger-2">Predict. Compete. Win.</p>
