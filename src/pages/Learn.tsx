@@ -18,7 +18,7 @@ interface MarketData {
   fundingRate: string;
   openInterest: string;
   volume24h: string;
-  candles: { t: number; close: number }[];
+  candles: { t: number; open: number; high: number; low: number; close: number; volume?: number }[];
   mentions: { text: string; likes: number; author: string }[];
   trades: any[];
 }
