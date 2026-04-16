@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { BarChart2, Sparkles, Quote, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
 import LiveTradesFeed from "@/components/LiveTradesFeed";
+import CandlestickChart from "@/components/CandlestickChart";
 
 const COINS = ["BTC", "ETH", "SOL"] as const;
 const INTERVALS = ["1m", "5m", "15m", "1h", "4h"] as const;
@@ -18,7 +18,7 @@ interface MarketData {
   fundingRate: string;
   openInterest: string;
   volume24h: string;
-  candles: { t: number; close: number }[];
+  candles: { t: number; open: number; high: number; low: number; close: number; volume?: number }[];
   mentions: { text: string; likes: number; author: string }[];
   trades: any[];
 }
@@ -189,39 +189,8 @@ const Learn = () => {
         </div>
 
         {/* Price Chart */}
-        <div className="bg-card-dark rounded-xl p-3 mb-5" style={{ height: 200 }}>
-          {loading ? (
-            <Skeleton className="w-full h-full rounded-lg" />
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data?.candles ?? []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis
-                  dataKey="t"
-                  tickFormatter={formatTime}
-                  stroke="#8BB8CC"
-                  tick={{ fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={["auto", "auto"]}
-                  tickFormatter={(v: number) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "K" : v.toFixed(0)}`}
-                  stroke="#8BB8CC"
-                  tick={{ fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={55}
-                />
-                <Tooltip
-                  contentStyle={{ background: "#0F2235", border: "1px solid rgba(92,200,232,0.2)", borderRadius: 8, fontSize: 12 }}
-                  labelFormatter={(v: number) => formatTime(v)}
-                  formatter={(v: number) => [formatPrice(v), "Price"]}
-                />
-                <Line type="monotone" dataKey="close" stroke="#5CC8E8" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+        <div className="bg-card-dark rounded-xl p-3 mb-5">
+          <CandlestickChart candles={data?.candles ?? []} loading={loading} />
         </div>
 
         {/* Social Signals */}
